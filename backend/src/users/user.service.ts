@@ -9,7 +9,8 @@ export class UserService {
   }
 
   async create(data: { name: string; email: string; address: string; password: string }) {
-    const hashedPass = await hash(data.password, 8);
+    const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS) || 8;
+    const hashedPass = await hash(data.password, saltRounds);
     return this.prisma.user.create({
       data: {
         ...data,
@@ -25,12 +26,26 @@ export class UserService {
     });
   }
   async findOne(id: string) {
-    return this.prisma.user.findUnique({ where: { id } });
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new Error("Usuário não encontrado.");
+    }
+    return user;
   }
   async update(id: string, data: Partial<{ name: string; email: string; address: string }>) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new Error("Usuário não encontrado.");
+    }
+
     return this.prisma.user.update({ where: { id }, data });
   }
   async delete(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new Error("Usuário não encontrado.");
+    }
+
     return this.prisma.user.update({
       where: { id },
       data: {

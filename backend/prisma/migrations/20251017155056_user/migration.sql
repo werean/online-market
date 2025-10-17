@@ -5,6 +5,7 @@ CREATE TABLE "User" (
     "address" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
+    "emailVerified" BOOLEAN NOT NULL DEFAULT false,
     "create_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,

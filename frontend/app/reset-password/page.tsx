@@ -10,6 +10,7 @@ import { apiFetch } from "@/lib/http";
 import { TextField } from "@/components/form/TextField";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { Feedback } from "@/components/Feedback";
+import { Spinner } from "@/components/Spinner/Spinner";
 import styles from "./page.module.css";
 
 export default function ResetPasswordPage() {
@@ -18,6 +19,7 @@ export default function ResetPasswordPage() {
   const token = searchParams.get("token") || "";
 
   const [loading, setLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; type: "error" | "success" } | null>(
     null
   );
@@ -47,19 +49,24 @@ export default function ResetPasswordPage() {
         body: JSON.stringify(data),
       });
 
-      setFeedback({ message: "Senha redefinida com sucesso.", type: "success" });
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
+      setIsRedirecting(true);
+      router.push("/login");
     } catch (error: any) {
       setFeedback({
         message: error.message || "Token inválido ou expirado.",
         type: "error",
       });
-    } finally {
       setLoading(false);
     }
   };
+
+  if (isRedirecting) {
+    return (
+      <div className="loading-container">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div>

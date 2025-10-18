@@ -7,6 +7,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  isSeller: boolean;
 }
 
 interface UseSessionReturn {

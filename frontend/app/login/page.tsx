@@ -2,22 +2,37 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { loginSchema, LoginInput } from "@/lib/validators/login";
 import { apiFetch } from "@/lib/http";
+import { useAuth } from "@/lib/contexts/AuthContext";
 import { TextField } from "@/components/form/TextField";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { Feedback } from "@/components/Feedback";
+import { Spinner } from "@/components/Spinner/Spinner";
 import styles from "./page.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
+  const { refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; type: "error" | "success" } | null>(
     null
   );
+
+  useEffect(() => {
+    if (redirect === "cart") {
+      setFeedback({
+        message: "Para utilizar o carrinho você precisa possuir uma conta.",
+        type: "error",
+      });
+    }
+  }, [redirect]);
 
   const {
     register,
@@ -37,16 +52,27 @@ export default function LoginPage() {
         body: JSON.stringify(data),
       });
 
-      setFeedback({ message: "Login realizado com sucesso.", type: "success" });
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1000);
+      setIsRedirecting(true);
+      await refreshUser();
+
+      if (redirect === "cart") {
+        router.push("/cart");
+      } else {
+        router.push("/");
+      }
     } catch (error: any) {
       setFeedback({ message: error.message || "Erro ao fazer login.", type: "error" });
-    } finally {
       setLoading(false);
     }
   };
+
+  if (isRedirecting) {
+    return (
+      <div className="loading-container">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div>

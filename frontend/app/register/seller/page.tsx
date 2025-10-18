@@ -11,9 +11,9 @@ import { TextField } from "@/components/form/TextField";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { Feedback } from "@/components/Feedback";
 import { Spinner } from "@/components/Spinner/Spinner";
-import styles from "./page.module.css";
+import styles from "../page.module.css";
 
-export default function RegisterPage() {
+export default function RegisterSellerPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -38,7 +38,7 @@ export default function RegisterPage() {
         method: "POST",
         body: JSON.stringify({
           ...data,
-          isSeller: false,
+          isSeller: true,
         }),
       });
 
@@ -61,7 +61,7 @@ export default function RegisterPage() {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Criar Conta</h1>
+        <h1 className={styles.title}>Cadastrar como Vendedor</h1>
 
         {feedback && <Feedback message={feedback.message} type={feedback.type} />}
 
@@ -84,7 +84,7 @@ export default function RegisterPage() {
             error={errors.password?.message}
           />
 
-          <SubmitButton loading={loading}>Cadastrar</SubmitButton>
+          <SubmitButton loading={loading}>Cadastrar como Vendedor</SubmitButton>
         </form>
 
         <p className={styles.link}>

@@ -1,0 +1,7 @@
+.center {
+  display: grid;
+  place-items: center;
+  height: 40vh;
+  color: var(--muted);
+  font-size: 1.05rem;
+}

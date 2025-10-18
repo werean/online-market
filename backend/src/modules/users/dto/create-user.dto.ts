@@ -5,6 +5,7 @@ export const CreateUserSchema = z.object({
   email: z.email("E-mail inválido"),
   address: z.string().min(5, "Endereço inválido"),
   password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+  isSeller: z.boolean().optional().default(false),
 });
 
 export type CreateUserDto = z.infer<typeof CreateUserSchema>;

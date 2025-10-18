@@ -2,17 +2,6 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import jwt from "jsonwebtoken";
 import { prisma } from "../../config/prisma";
 
-declare module "fastify" {
-  interface FastifyRequest {
-    userId?: string;
-    user?: {
-      id: string;
-      email: string;
-      isSeller: boolean;
-    };
-  }
-}
-
 export async function verifyJWT(request: FastifyRequest, reply: FastifyReply) {
   try {
     let token = request.cookies.auth_token;

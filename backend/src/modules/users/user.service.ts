@@ -9,12 +9,19 @@ export class UserService {
     this.userRepository = userRepository;
   }
 
-  async create(data: { name: string; email: string; address: string; password: string }) {
+  async create(data: {
+    name: string;
+    email: string;
+    address: string;
+    password: string;
+    isSeller?: boolean;
+  }) {
     const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS) || 8;
     const hashedPass = await hash(data.password, saltRounds);
     return this.userRepository.createUser({
       ...data,
       password: hashedPass,
+      isSeller: data.isSeller || false,
     });
   }
 

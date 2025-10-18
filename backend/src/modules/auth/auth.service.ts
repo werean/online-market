@@ -29,7 +29,7 @@ export class AuthService {
       {
         userId: user.id,
         email: user.email,
-        isSeller: user.isDeleted,
+        isSeller: user.isSeller,
       },
       process.env.JWT_SECRET || "secret",
       {
@@ -43,6 +43,7 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
+        isSeller: user.isSeller,
       },
     };
   }

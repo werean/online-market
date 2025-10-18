@@ -86,4 +86,35 @@ export class AuthController {
       });
     }
   };
+
+  getUser = async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      if (!request.userId) {
+        return reply.status(401).send({
+          message: "Não autenticado.",
+        });
+      }
+
+      const user = await this.authService.getUserById(request.userId);
+
+      if (!user) {
+        return reply.status(404).send({
+          message: "Usuário não encontrado.",
+        });
+      }
+
+      return reply.status(200).send({
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+      });
+    } catch (err: any) {
+      return reply.status(400).send({
+        message: "Erro ao buscar usuário.",
+        error: err.message,
+      });
+    }
+  };
 }

@@ -94,4 +94,8 @@ export class AuthService {
       data: { used: true },
     });
   }
+
+  async getUserById(userId: string) {
+    return await this.userRepository.findById(userId);
+  }
 }

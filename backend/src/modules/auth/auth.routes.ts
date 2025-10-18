@@ -3,6 +3,7 @@ import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { UserRepository } from "../users/user.repository";
 import { prisma } from "../../config/prisma";
+import { verifyJWT } from "./auth.middleware";
 
 export async function authRoutes(fastify: FastifyInstance) {
   const userRepository = new UserRepository(prisma);
@@ -13,4 +14,5 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.post("/logout", authController.logout);
   fastify.post("/recover-password", authController.recoverPassword);
   fastify.post("/reset-password", authController.resetPassword);
+  fastify.get("/auth/user", { preHandler: verifyJWT }, authController.getUser);
 }

@@ -20,4 +20,18 @@ model User {
   isDeleted Boolean @default(false)
   deletedAt DateTime? 
   isSeller Boolean @default(false)
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Int
+  images      String
+  stock       Int
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

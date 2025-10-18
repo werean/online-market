@@ -1,0 +1,480 @@
+/**
+ * ProductService
+ *
+ * Serviço otimizado para gerenciamento de produtos com suporte a:
+ * - Importação em massa via CSV com controle de concorrência
+ * - Logs estruturados com timestamps
+ * - Validação Zod para dados de entrada
+ * - Métricas de performance
+ * - Stream processing para eficiência de memória
+ */
+
+import { PrismaClient } from "../generated/prisma";
+import { CreateProductDto, createProductSchema } from "./dto/create-product.dto";
+import { UpdateProductDto } from "./dto/update-product.dto";
+import * as fs from "fs";
+import z from "zod";
+import csvParser from "csv-parser";
+import { ZodError } from "zod";
+
+export class ProductService {
+  private prisma: PrismaClient;
+
+  constructor(prisma: PrismaClient) {
+    this.prisma = prisma;
+  }
+
+  /**
+   * Log com timestamp para informações
+   */
+  private logInfo(message: string): void {
+    const timestamp = new Date().toISOString();
+    console.info(`[${timestamp}] [CSV Upload] ${message}`);
+  }
+
+  /**
+   * Log com timestamp para erros
+   */
+  private logError(message: string): void {
+    const timestamp = new Date().toISOString();
+    console.error(`[${timestamp}] [CSV Upload] ${message}`);
+  }
+  /**
+   * Faz o parse seguro das imagens JSON, retornando [] se inválido
+   */
+  private safeParseImages(images: string): string[] {
+    try {
+      return JSON.parse(images);
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Criar um novo produto vinculado ao vendedor autenticado
+   */
+  async createProduct(data: CreateProductDto, userId: string) {
+    const product = await this.prisma.product.create({
+      data: {
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        images: JSON.stringify(data.images),
+        stock: data.stock,
+        sellerId: userId,
+      },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...product,
+      images: this.safeParseImages(product.images),
+      lowStock: product.stock <= 10,
+    };
+  }
+
+  /**
+   * Atualizar produto (apenas se pertencer ao vendedor)
+   */
+  async updateProduct(id: string, data: UpdateProductDto, userId: string) {
+    // Verificar se o produto existe e pertence ao vendedor
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+    });
+
+    if (!product) {
+      throw new Error("Produto não encontrado.");
+    }
+
+    if (product.sellerId !== userId) {
+      throw new Error("Você não tem permissão para editar este produto.");
+    }
+
+    // Atualizar o produto
+    const updatedProduct = await this.prisma.product.update({
+      where: { id },
+      data: {
+        ...(data.name && { name: data.name }),
+        ...(data.description !== undefined && { description: data.description }),
+        ...(data.price !== undefined && { price: data.price }),
+        ...(data.images && { images: JSON.stringify(data.images) }),
+        ...(data.stock !== undefined && { stock: data.stock }),
+      },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...updatedProduct,
+      images: JSON.parse(updatedProduct.images),
+      lowStock: updatedProduct.stock <= 10,
+    };
+  }
+
+  /**
+   * Deletar produto (apenas se pertencer ao vendedor)
+   */
+  async deleteProduct(id: string, userId: string) {
+    // Verificar se o produto existe e pertence ao vendedor
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+    });
+
+    if (!product) {
+      throw new Error("Produto não encontrado.");
+    }
+
+    if (product.sellerId !== userId) {
+      throw new Error("Você não tem permissão para deletar este produto.");
+    }
+
+    await this.prisma.product.delete({
+      where: { id },
+    });
+
+    return { message: "Produto deletado com sucesso." };
+  }
+
+  /**
+   * Listar produtos do vendedor autenticado
+   */
+  async getSellerProducts(userId: string) {
+    const products = await this.prisma.product.findMany({
+      where: { sellerId: userId },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return products.map((product) => {
+      let images: string[] = [];
+
+      try {
+        images = this.safeParseImages(product.images);
+      } catch {
+        images = [];
+      }
+
+      return {
+        ...product,
+        images,
+        lowStock: product.stock <= 10,
+      };
+    });
+  }
+
+  /**
+   * Listar todos os produtos (público) com paginação e filtros
+   */
+  async getAllProductsPaginated(
+    page: number = 1,
+    limit: number = 10,
+    filters?: {
+      name?: string;
+      minPrice?: number;
+      maxPrice?: number;
+    }
+  ) {
+    const skip = (page - 1) * limit;
+
+    // Construir filtros dinâmicos
+    const where: any = {};
+
+    if (filters?.name) {
+      where.name = { contains: filters.name };
+    }
+
+    if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
+      where.price = {};
+      if (filters.minPrice !== undefined) {
+        where.price.gte = filters.minPrice;
+      }
+      if (filters.maxPrice !== undefined) {
+        where.price.lte = filters.maxPrice;
+      }
+    }
+
+    // Buscar produtos com paginação
+    const [products, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      products: products.map((product) => ({
+        ...product,
+        images: this.safeParseImages(product.images),
+        lowStock: product.stock <= 10,
+      })),
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
+  }
+
+  /**
+   * Upload em massa via CSV (versão otimizada)
+   * - Processamento assíncrono nativo sem Promise manual
+   * - Processamento em lote com controle de concorrência
+   * - Uso eficiente de memória (stream processing)
+   * - Limpeza automática do arquivo após processamento
+   * - Métricas de performance
+   */
+  async bulkInsertFromCSV(
+    filePath: string,
+    userId: string
+  ): Promise<{
+    success: number;
+    failed: number;
+    errors: string[];
+    lowStockProducts: string[];
+  }> {
+    const startTime = performance.now();
+    const fileName = filePath.split("/").pop() || filePath;
+
+    this.logInfo(`Iniciando processamento do arquivo: ${fileName}`);
+    this.logInfo(`Vendedor ID: ${userId}`);
+
+    const errors: string[] = [];
+    const lowStockProducts: string[] = [];
+    let success = 0;
+    let failed = 0;
+    let lineNumber = 0;
+    let batch: any[] = [];
+    const BATCH_SIZE = 10; // Processa 10 linhas por vez
+
+    try {
+      // Criar um stream assíncrono iterável
+      const stream = fs.createReadStream(filePath).pipe(csvParser());
+
+      // Processar linha por linha sem acumular tudo na memória
+      for await (const row of stream) {
+        lineNumber++;
+        batch.push({ row, lineNumber });
+
+        // Quando o lote atingir o tamanho definido, processar em paralelo
+        if (batch.length >= BATCH_SIZE) {
+          const results = await this.processBatch(batch, userId);
+          success += results.success;
+          failed += results.failed;
+          errors.push(...results.errors);
+          lowStockProducts.push(...results.lowStockProducts);
+
+          this.logInfo(
+            `Progresso: ${lineNumber} linhas processadas (${success} sucesso, ${failed} falhas)`
+          );
+
+          // Limpar o lote
+          batch = [];
+        }
+      }
+
+      // Processar o lote final (se houver linhas restantes)
+      if (batch.length > 0) {
+        const results = await this.processBatch(batch, userId);
+        success += results.success;
+        failed += results.failed;
+        errors.push(...results.errors);
+        lowStockProducts.push(...results.lowStockProducts);
+      }
+
+      const endTime = performance.now();
+      const duration = (endTime - startTime).toFixed(2);
+
+      this.logInfo(`Processamento concluído: ${success} produtos criados, ${failed} falharam`);
+      this.logInfo(`Total de linhas processadas: ${lineNumber}`);
+      this.logInfo(`Tempo total de execução: ${duration}ms`);
+
+      return {
+        success,
+        failed,
+        errors,
+        lowStockProducts,
+      };
+    } catch (err: any) {
+      this.logError(`Erro ao processar arquivo`);
+      throw new Error(`Erro interno ao processar o arquivo CSV`);
+    } finally {
+      // Limpeza do arquivo temporário
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          this.logInfo(`Arquivo temporário removido`);
+        }
+      } catch (cleanupErr: any) {
+        this.logError(`Aviso: Não foi possível remover arquivo temporário`);
+      }
+    }
+  }
+
+  /**
+   * Processa um lote de linhas com controle de concorrência limitado
+   * Permite no máximo 5 promessas simultâneas para evitar picos de CPU
+   */
+  private async processBatch(
+    batch: Array<{ row: any; lineNumber: number }>,
+    userId: string
+  ): Promise<{
+    success: number;
+    failed: number;
+    errors: string[];
+    lowStockProducts: string[];
+  }> {
+    const CONCURRENCY_LIMIT = 5;
+    const results: Array<{
+      success: boolean;
+      productName?: string;
+      lowStock?: boolean;
+      error?: string;
+    }> = [];
+
+    // Processar com concorrência controlada
+    for (let i = 0; i < batch.length; i += CONCURRENCY_LIMIT) {
+      const chunk = batch.slice(i, i + CONCURRENCY_LIMIT);
+      const promises = chunk.map(({ row, lineNumber }) => this.processRow(row, lineNumber, userId));
+
+      const chunkResults = await Promise.allSettled(promises);
+
+      chunkResults.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          results.push(result.value);
+        } else {
+          results.push({
+            success: false,
+            error: `Linha ${chunk[index].lineNumber}: ${result.reason}`,
+          });
+        }
+      });
+    }
+
+    // Agregar resultados
+    let success = 0;
+    let failed = 0;
+    const errors: string[] = [];
+    const lowStockProducts: string[] = [];
+
+    results.forEach((result) => {
+      if (result.success) {
+        success++;
+        if (result.lowStock && result.productName) {
+          lowStockProducts.push(result.productName);
+        }
+      } else {
+        failed++;
+        if (result.error) {
+          errors.push(result.error);
+        }
+      }
+    });
+
+    return { success, failed, errors, lowStockProducts };
+  }
+
+  /**
+   * Processa uma linha individual do CSV com validação numérica aprimorada
+   */
+  private async processRow(
+    row: any,
+    lineNumber: number,
+    userId: string
+  ): Promise<{
+    success: boolean;
+    productName?: string;
+    lowStock?: boolean;
+    error?: string;
+  }> {
+    try {
+      // Validação numérica segura ANTES da validação Zod
+      const price = Number(row.price);
+      if (isNaN(price)) {
+        throw new Error("Preço inválido - deve ser um número válido");
+      }
+
+      const stock = Number(row.stock);
+      if (isNaN(stock)) {
+        throw new Error("Estoque inválido - deve ser um número válido");
+      }
+
+      // Validar e preparar dados
+      const images = row.images ? row.images.split(";").map((img: string) => img.trim()) : [];
+
+      const productData = {
+        name: row.name,
+        description: row.description || undefined,
+        price: price,
+        images,
+        stock: stock,
+      };
+
+      // Validar com Zod
+      const validatedData = createProductSchema.parse(productData);
+
+      // Criar produto
+      const product = await this.createProduct(validatedData, userId);
+
+      return {
+        success: true,
+        productName: product.name,
+        lowStock: product.lowStock,
+      };
+    } catch (err: any) {
+      // Tratamento diferenciado para erros de validação do Zod
+      if (err instanceof ZodError) {
+        const fieldErrors = err.issues
+          .map((issue: any) => `${issue.path.join(".")}: ${issue.message}`)
+          .join(", ");
+        return {
+          success: false,
+          error: `Linha ${lineNumber}: Erro de validação - ${fieldErrors}`,
+        };
+      }
+
+      // Outros tipos de erro
+      return {
+        success: false,
+        error: `Linha ${lineNumber}: ${err.message}`,
+      };
+    }
+  }
+}

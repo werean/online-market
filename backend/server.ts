@@ -2,6 +2,7 @@ import fastify from "fastify";
 import cookie from "@fastify/cookie";
 import { userRoutes } from "./src/users/user.routes";
 import { authRoutes } from "./src/auth/auth.routes";
+import { productRoutes } from "./src/products/product.routes";
 
 const app = fastify();
 
@@ -13,6 +14,7 @@ app.register(cookie, {
 // Registrar as rotas ANTES de iniciar o servidor
 app.register(authRoutes);
 app.register(userRoutes, { prefix: "/user" });
+app.register(productRoutes, { prefix: "/products" });
 
 const PORT = Number(process.env.PORT) || 8080;
 

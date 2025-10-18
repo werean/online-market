@@ -1,9 +1,9 @@
-
 import { buildApp } from "./app";
+import { env } from "./config/env";
 
 async function main() {
   const app = buildApp();
-  const PORT = Number(process.env.PORT) || 8080;
+  const PORT = env.PORT;
 
   try {
     await app.ready();

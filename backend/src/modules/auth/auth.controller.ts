@@ -1,6 +1,8 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { UserLoginDto, userLoginSchema } from "./auth.dto";
+import { UserLoginDto, userLoginSchema } from "./dto/auth.dto";
 import { AuthService } from "./auth.service";
+import { RecoverPasswordDto, recoverPasswordSchema } from "./dto/recover-password.dto";
+import { ResetPasswordDto, resetPasswordSchema } from "./dto/reset-password.dto";
 
 export class AuthController {
   private authService: AuthService;
@@ -15,7 +17,6 @@ export class AuthController {
 
       const login = await this.authService.login(email, password);
 
-      // Configurar o cookie com o token JWT
       return reply
         .setCookie("auth_token", login.token, {
           httpOnly: true,
@@ -36,7 +37,6 @@ export class AuthController {
 
   logout = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      // Remover o cookie de autenticação
       return reply
         .clearCookie("auth_token", {
           path: "/",
@@ -47,6 +47,42 @@ export class AuthController {
       return reply.status(400).send({
         message: "Erro ao realizar logout.",
         error: err.message,
+      });
+    }
+  };
+
+  recoverPassword = async (
+    request: FastifyRequest<{ Body: RecoverPasswordDto }>,
+    reply: FastifyReply
+  ) => {
+    try {
+      const { email } = recoverPasswordSchema.parse(request.body);
+      await this.authService.recoverPassword(email);
+
+      return reply.status(200).send({
+        message: "Se o e-mail existir, enviaremos instruções de recuperação.",
+      });
+    } catch (err: any) {
+      return reply.status(200).send({
+        message: "Se o e-mail existir, enviaremos instruções de recuperação.",
+      });
+    }
+  };
+
+  resetPassword = async (
+    request: FastifyRequest<{ Body: ResetPasswordDto }>,
+    reply: FastifyReply
+  ) => {
+    try {
+      const { token, newPassword } = resetPasswordSchema.parse(request.body);
+      await this.authService.resetPassword(token, newPassword);
+
+      return reply.status(200).send({
+        message: "Senha redefinida com sucesso.",
+      });
+    } catch (err: any) {
+      return reply.status(400).send({
+        message: "Token inválido ou expirado.",
       });
     }
   };

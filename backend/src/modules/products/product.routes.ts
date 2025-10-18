@@ -1,18 +1,17 @@
 import { FastifyInstance } from "fastify";
 import { ProductController } from "./product.controller";
 import { ProductService } from "./product.service";
-import { PrismaClient } from "../generated/prisma";
-import { verifySellerAccess, verifyJWT } from "../middlewares/authMiddleware";
+import { ProductRepository } from "./product.repository";
+import { prisma } from "../../config/prisma";
+import { verifySellerAccess, verifyJWT } from "../auth/auth.middleware";
 
 export async function productRoutes(fastify: FastifyInstance) {
-  const prisma = new PrismaClient();
-  const productService = new ProductService(prisma);
+  const productRepository = new ProductRepository(prisma);
+  const productService = new ProductService(productRepository);
   const productController = new ProductController(productService);
 
-  // Rotas públicas (sem autenticação)
   fastify.get("/", productController.getAll);
 
-  // Rotas protegidas - apenas vendedores autenticados
   fastify.post("/", {
     preHandler: [verifySellerAccess],
     handler: productController.create,

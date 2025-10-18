@@ -1,47 +1,27 @@
-/**
- * ProductService
- *
- * Serviço otimizado para gerenciamento de produtos com suporte a:
- * - Importação em massa via CSV com controle de concorrência
- * - Logs estruturados com timestamps
- * - Validação Zod para dados de entrada
- * - Métricas de performance
- * - Stream processing para eficiência de memória
- */
-
-import { PrismaClient } from "../generated/prisma";
 import { CreateProductDto, createProductSchema } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
+import { ProductRepository } from "./product.repository";
 import * as fs from "fs";
 import z from "zod";
 import csvParser from "csv-parser";
 import { ZodError } from "zod";
 
 export class ProductService {
-  private prisma: PrismaClient;
+  private productRepository: ProductRepository;
 
-  constructor(prisma: PrismaClient) {
-    this.prisma = prisma;
+  constructor(productRepository: ProductRepository) {
+    this.productRepository = productRepository;
   }
 
-  /**
-   * Log com timestamp para informações
-   */
   private logInfo(message: string): void {
     const timestamp = new Date().toISOString();
     console.info(`[${timestamp}] [CSV Upload] ${message}`);
   }
 
-  /**
-   * Log com timestamp para erros
-   */
   private logError(message: string): void {
     const timestamp = new Date().toISOString();
     console.error(`[${timestamp}] [CSV Upload] ${message}`);
   }
-  /**
-   * Faz o parse seguro das imagens JSON, retornando [] se inválido
-   */
   private safeParseImages(images: string): string[] {
     try {
       return JSON.parse(images);
@@ -50,28 +30,14 @@ export class ProductService {
     }
   }
 
-  /**
-   * Criar um novo produto vinculado ao vendedor autenticado
-   */
   async createProduct(data: CreateProductDto, userId: string) {
-    const product = await this.prisma.product.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        images: JSON.stringify(data.images),
-        stock: data.stock,
-        sellerId: userId,
-      },
-      include: {
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
+    const product = await this.productRepository.createProduct({
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      images: JSON.stringify(data.images),
+      stock: data.stock,
+      sellerId: userId,
     });
 
     return {
@@ -81,14 +47,8 @@ export class ProductService {
     };
   }
 
-  /**
-   * Atualizar produto (apenas se pertencer ao vendedor)
-   */
   async updateProduct(id: string, data: UpdateProductDto, userId: string) {
-    // Verificar se o produto existe e pertence ao vendedor
-    const product = await this.prisma.product.findUnique({
-      where: { id },
-    });
+    const product = await this.productRepository.findById(id);
 
     if (!product) {
       throw new Error("Produto não encontrado.");
@@ -98,25 +58,12 @@ export class ProductService {
       throw new Error("Você não tem permissão para editar este produto.");
     }
 
-    // Atualizar o produto
-    const updatedProduct = await this.prisma.product.update({
-      where: { id },
-      data: {
-        ...(data.name && { name: data.name }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.price !== undefined && { price: data.price }),
-        ...(data.images && { images: JSON.stringify(data.images) }),
-        ...(data.stock !== undefined && { stock: data.stock }),
-      },
-      include: {
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
+    const updatedProduct = await this.productRepository.updateProduct(id, {
+      ...(data.name && { name: data.name }),
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.price !== undefined && { price: data.price }),
+      ...(data.images && { images: JSON.stringify(data.images) }),
+      ...(data.stock !== undefined && { stock: data.stock }),
     });
 
     return {
@@ -126,14 +73,8 @@ export class ProductService {
     };
   }
 
-  /**
-   * Deletar produto (apenas se pertencer ao vendedor)
-   */
   async deleteProduct(id: string, userId: string) {
-    // Verificar se o produto existe e pertence ao vendedor
-    const product = await this.prisma.product.findUnique({
-      where: { id },
-    });
+    const product = await this.productRepository.findById(id);
 
     if (!product) {
       throw new Error("Produto não encontrado.");
@@ -143,30 +84,15 @@ export class ProductService {
       throw new Error("Você não tem permissão para deletar este produto.");
     }
 
-    await this.prisma.product.delete({
-      where: { id },
-    });
+    await this.productRepository.deleteProduct(id);
 
-    return { message: "Produto deletado com sucesso." };
+    return {
+      message: "Produto deletado com sucesso",
+    };
   }
 
-  /**
-   * Listar produtos do vendedor autenticado
-   */
   async getSellerProducts(userId: string) {
-    const products = await this.prisma.product.findMany({
-      where: { sellerId: userId },
-      include: {
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const products = await this.productRepository.findAllBySeller(userId);
 
     return products.map((product) => {
       let images: string[] = [];
@@ -185,9 +111,6 @@ export class ProductService {
     });
   }
 
-  /**
-   * Listar todos os produtos (público) com paginação e filtros
-   */
   async getAllProductsPaginated(
     page: number = 1,
     limit: number = 10,
@@ -197,44 +120,7 @@ export class ProductService {
       maxPrice?: number;
     }
   ) {
-    const skip = (page - 1) * limit;
-
-    // Construir filtros dinâmicos
-    const where: any = {};
-
-    if (filters?.name) {
-      where.name = { contains: filters.name };
-    }
-
-    if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
-      where.price = {};
-      if (filters.minPrice !== undefined) {
-        where.price.gte = filters.minPrice;
-      }
-      if (filters.maxPrice !== undefined) {
-        where.price.lte = filters.maxPrice;
-      }
-    }
-
-    // Buscar produtos com paginação
-    const [products, total] = await Promise.all([
-      this.prisma.product.findMany({
-        where,
-        skip,
-        take: limit,
-        include: {
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      }),
-      this.prisma.product.count({ where }),
-    ]);
+    const { products, total } = await this.productRepository.findAllPaginated(page, limit, filters);
 
     const totalPages = Math.ceil(total / limit);
 
@@ -253,14 +139,6 @@ export class ProductService {
     };
   }
 
-  /**
-   * Upload em massa via CSV (versão otimizada)
-   * - Processamento assíncrono nativo sem Promise manual
-   * - Processamento em lote com controle de concorrência
-   * - Uso eficiente de memória (stream processing)
-   * - Limpeza automática do arquivo após processamento
-   * - Métricas de performance
-   */
   async bulkInsertFromCSV(
     filePath: string,
     userId: string
@@ -348,10 +226,6 @@ export class ProductService {
     }
   }
 
-  /**
-   * Processa um lote de linhas com controle de concorrência limitado
-   * Permite no máximo 5 promessas simultâneas para evitar picos de CPU
-   */
   private async processBatch(
     batch: Array<{ row: any; lineNumber: number }>,
     userId: string
@@ -411,9 +285,6 @@ export class ProductService {
     return { success, failed, errors, lowStockProducts };
   }
 
-  /**
-   * Processa uma linha individual do CSV com validação numérica aprimorada
-   */
   private async processRow(
     row: any,
     lineNumber: number,

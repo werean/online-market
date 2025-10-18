@@ -1,11 +1,12 @@
 import { FastifyInstance } from "fastify";
 import { UserController } from "./user.controller";
 import { UserService } from "./user.service";
-import { PrismaClient } from "../generated/prisma";
+import { UserRepository } from "./user.repository";
+import { prisma } from "../../config/prisma";
 
 export async function userRoutes(fastify: FastifyInstance) {
-  const prisma = new PrismaClient();
-  const userService = new UserService(prisma);
+  const userRepository = new UserRepository(prisma);
+  const userService = new UserService(userRepository);
   const userController = new UserController(userService);
 
   fastify.post("/register", userController.create);

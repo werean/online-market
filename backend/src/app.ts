@@ -18,7 +18,7 @@ export function buildApp() {
     credentials: true,
   });
 
-  app.register(authRoutes);
+  app.register(authRoutes, { prefix: "/auth" });
   app.register(userRoutes, { prefix: "/user" });
   app.register(productRoutes, { prefix: "/products" });
 

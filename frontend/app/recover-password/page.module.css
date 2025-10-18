@@ -1,7 +1,13 @@
 .title {
   font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 20px;
 }
 
 .form {

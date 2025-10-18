@@ -30,8 +30,8 @@ export function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await apiFetch("/logout", { method: "POST" });
-      await refreshUser();
+      await apiFetch("/auth/logout", { method: "POST" });
+      refreshUser();
       router.push("/login");
     } catch (error) {
       console.error("Erro ao fazer logout:", error);

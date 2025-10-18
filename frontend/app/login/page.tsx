@@ -47,7 +47,7 @@ export default function LoginPage() {
     setFeedback(null);
 
     try {
-      await apiFetch("/login", {
+      await apiFetch("/auth/login", {
         method: "POST",
         body: JSON.stringify(data),
       });

@@ -1,0 +1,14 @@
+.container {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.text {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.text strong {
+  color: #007bff;
+  font-weight: 600;
+}

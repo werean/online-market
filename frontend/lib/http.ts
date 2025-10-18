@@ -1,5 +1,12 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+export class ApiError extends Error {
+  constructor(message: string, public status: number, public data?: any) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export const apiFetch = async <T = unknown>(path: string, init?: RequestInit): Promise<T> => {
   const url = `${API_URL}${path}`;
 
@@ -27,7 +34,7 @@ export const apiFetch = async <T = unknown>(path: string, init?: RequestInit): P
 
   if (!response.ok) {
     const errorMessage = data?.message || `HTTP error! status: ${response.status}`;
-    throw new Error(errorMessage);
+    throw new ApiError(errorMessage, response.status, data);
   }
 
   return data as T;

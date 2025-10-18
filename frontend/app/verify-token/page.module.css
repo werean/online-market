@@ -1,0 +1,65 @@
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.subtitle strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.otpContainer {
+  margin: 24px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.resendContainer {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.resendButton {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 8px 16px;
+}
+
+.resendButton:hover:not(:disabled) {
+  color: #0056b3;
+}
+
+.resendButton:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.links {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.link {
+  text-decoration: underline;
+}

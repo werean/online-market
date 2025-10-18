@@ -13,6 +13,7 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.post("/login", authController.login);
   fastify.post("/logout", authController.logout);
   fastify.post("/recover-password", authController.recoverPassword);
+  fastify.post("/verify-token", authController.verifyToken);
   fastify.post("/reset-password", authController.resetPassword);
-  fastify.get("/auth/user", { preHandler: verifyJWT }, authController.getUser);
+  fastify.get("/user", { preHandler: verifyJWT }, authController.getUser);
 }

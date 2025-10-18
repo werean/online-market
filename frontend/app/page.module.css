@@ -1,0 +1,11 @@
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.text {
+  font-size: 1rem;
+  color: var(--muted);
+  line-height: 1.5;
+}

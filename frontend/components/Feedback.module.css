@@ -1,0 +1,16 @@
+.box {
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.error {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.success {
+  background: #dcfce7;
+  color: var(--success);
+}

@@ -1,0 +1,26 @@
+:root {
+  --bg: #fafafa;
+  --text: #111;
+  --muted: #666;
+  --primary: #111;
+  --danger: #b91c1c;
+  --success: #166534;
+  --border: #e5e5e5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

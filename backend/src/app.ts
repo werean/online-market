@@ -1,6 +1,7 @@
 import fastify from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
+import multipart from "@fastify/multipart";
 import { env } from "./config/env";
 import { userRoutes } from "./modules/users/user.routes";
 import { authRoutes } from "./modules/auth/auth.routes";
@@ -16,6 +17,12 @@ export function buildApp() {
   app.register(cors, {
     origin: env.FRONTEND_URL,
     credentials: true,
+  });
+
+  app.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB
+    },
   });
 
   app.register(authRoutes, { prefix: "/auth" });

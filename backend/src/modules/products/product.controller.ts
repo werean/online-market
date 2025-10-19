@@ -2,6 +2,9 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { ProductService } from "./product.service";
 import { createProductSchema, CreateProductDto } from "./dto/create-product.dto";
 import { updateProductSchema, UpdateProductDto } from "./dto/update-product.dto";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
 
 export class ProductController {
   private productService: ProductService;
@@ -100,7 +103,7 @@ export class ProductController {
   /**
    * Listar produtos do vendedor autenticado
    */
-  getMine = async (request: FastifyRequest, reply: FastifyReply) => {
+  getProduct = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const userId = request.userId!;
       const products = await this.productService.getSellerProducts(userId);
@@ -169,32 +172,51 @@ export class ProductController {
   /**
    * Upload de produtos via CSV (somente vendedor)
    */
-  uploadCSV = async (
-    request: FastifyRequest<{ Body: { filePath: string } }>,
-    reply: FastifyReply
-  ) => {
+  uploadCSV = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { filePath } = request.body;
       const userId = request.userId!;
 
-      if (!filePath) {
+      // Processar o arquivo multipart
+      const data = await request.file();
+
+      if (!data) {
         return reply.status(400).send({
           success: false,
-          message: "O caminho do arquivo CSV é obrigatório.",
+          message: "Nenhum arquivo foi enviado.",
         });
       }
 
-      const result = await this.productService.bulkInsertFromCSV(filePath, userId);
+      // Verificar se é um arquivo CSV
+      if (!data.filename.endsWith(".csv")) {
+        return reply.status(400).send({
+          success: false,
+          message: "O arquivo deve ser um CSV.",
+        });
+      }
+
+      // Salvar o arquivo temporariamente
+      const tempDir = os.tmpdir();
+      const tempFilePath = path.join(tempDir, `upload-${Date.now()}-${data.filename}`);
+
+      // Escrever o arquivo no disco
+      const fileStream = fs.createWriteStream(tempFilePath);
+      await data.file.pipe(fileStream);
+
+      // Aguardar o arquivo ser completamente escrito
+      await new Promise<void>((resolve, reject) => {
+        fileStream.on("finish", () => resolve());
+        fileStream.on("error", reject);
+      });
+
+      // Processar o CSV
+      const result = await this.productService.bulkInsertFromCSV(tempFilePath, userId);
 
       return reply.status(201).send({
-        success: true,
         message: `Upload concluído. ${result.success} produtos criados, ${result.failed} falharam.`,
-        data: {
-          success: result.success,
-          failed: result.failed,
-          errors: result.errors,
-          lowStockProducts: result.lowStockProducts,
-        },
+        success: result.success,
+        failed: result.failed,
+        errors: result.errors || [],
+        lowStockProducts: result.lowStockProducts || [],
       });
     } catch (err: any) {
       return reply.status(500).send({

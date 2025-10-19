@@ -24,7 +24,7 @@ export async function productRoutes(fastify: FastifyInstance) {
 
   fastify.get("/mine", {
     preHandler: [verifySellerAccess],
-    handler: productController.getMine,
+    handler: productController.getProduct,
   });
 
   fastify.put("/:id", {

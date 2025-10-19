@@ -57,7 +57,16 @@ export function Navbar() {
           {user ? (
             <>
               <span className={styles.greeting}>Olá, {user.name}</span>
-              {!user.isSeller && (
+              {user.isSeller ? (
+                <>
+                  <Link href="/products/new" className={styles.link}>
+                    Adicionar produto
+                  </Link>
+                  <Link href="/products/csv" className={styles.link}>
+                    Adicionar múltiplos produtos
+                  </Link>
+                </>
+              ) : (
                 <button onClick={handleCartClick} className={styles.cartBtn} aria-label="Carrinho">
                   <CartIcon />
                 </button>

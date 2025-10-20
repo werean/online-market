@@ -78,6 +78,26 @@
 
 .cartWrapper {
   position: relative;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.profileBtn {
+  border: none;
+  background: transparent;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profileBtn:hover {
+  background: var(--muted);
 }
 
 .cartDropdown {

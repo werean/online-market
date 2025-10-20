@@ -13,4 +13,5 @@ export async function userRoutes(fastify: FastifyInstance) {
   fastify.put("/update/:id", userController.update);
   fastify.get("/", userController.getAll);
   fastify.get("/:id", userController.getOne);
+  fastify.delete("/:id", userController.delete);
 }

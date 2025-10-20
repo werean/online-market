@@ -80,4 +80,26 @@ export class UserController {
       });
     }
   };
+
+  delete = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    try {
+      const { id } = request.params;
+      if (!id) {
+        return reply.status(400).send({ message: "ID é obrigatório." });
+      }
+      
+      await this.userService.delete(id);
+
+      return reply.status(200).send({ 
+        success: true,
+        message: "Perfil deletado com sucesso." 
+      });
+    } catch (err: any) {
+      return reply.status(500).send({
+        success: false,
+        message: "Erro ao deletar perfil.",
+        error: err.message,
+      });
+    }
+  };
 }

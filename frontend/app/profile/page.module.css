@@ -1,0 +1,114 @@
+.container {
+  min-height: calc(100vh - 64px);
+  margin-top: 64px;
+  padding: 32px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 500px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+  text-align: center;
+  color: var(--text);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.deleteSection {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+
+.deleteBtn {
+  width: 100%;
+  padding: 12px 24px;
+  border: 1px solid #d32f2f;
+  background: transparent;
+  color: #d32f2f;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteBtn:hover:not(:disabled) {
+  background: #d32f2f;
+  color: white;
+}
+
+.deleteBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.confirmDelete {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.confirmText {
+  color: #d32f2f;
+  font-weight: 500;
+  text-align: center;
+  margin: 0;
+}
+
+.confirmButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.confirmBtn,
+.cancelBtn {
+  flex: 1;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.confirmBtn {
+  border: 1px solid #d32f2f;
+  background: #d32f2f;
+  color: white;
+}
+
+.confirmBtn:hover:not(:disabled) {
+  background: #b71c1c;
+  border-color: #b71c1c;
+}
+
+.cancelBtn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: var(--muted);
+}
+
+.confirmBtn:disabled,
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

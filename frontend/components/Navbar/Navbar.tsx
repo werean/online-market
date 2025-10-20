@@ -27,6 +27,24 @@ function CartIcon() {
   );
 }
 
+function ProfileIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
 export function Navbar() {
   const { user, loading, refreshUser } = useAuth();
   const { items } = useCart();
@@ -78,6 +96,9 @@ export function Navbar() {
                   </>
                 ) : (
                   <div className={styles.cartWrapper}>
+                    <Link href="/profile" className={styles.profileBtn} aria-label="Perfil">
+                      <ProfileIcon />
+                    </Link>
                     <button
                       onClick={handleCartClick}
                       className={styles.cartBtn}

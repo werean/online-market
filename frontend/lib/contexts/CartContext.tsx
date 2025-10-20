@@ -85,24 +85,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (authLoading) return;
 
-    if (user) {
-      // Usuário logado - carregar do backend e migrar carrinho anônimo se existir
-      migrateAnonymousCart();
-    } else {
-      // Usuário não logado - carregar do localStorage
-      const anonymousCart = localStorage.getItem(ANONYMOUS_CART_KEY);
-      if (anonymousCart) {
-        try {
-          setItems(JSON.parse(anonymousCart));
-        } catch {
+    const initialize = async () => {
+      if (user) {
+        // Usuário logado - carregar do backend e migrar carrinho anônimo se existir
+        await migrateAnonymousCart();
+        await loadCartFromBackend();
+      } else {
+        // Usuário não logado - carregar do localStorage
+        const anonymousCart = localStorage.getItem(ANONYMOUS_CART_KEY);
+        if (anonymousCart) {
+          try {
+            setItems(JSON.parse(anonymousCart));
+          } catch {
+            setItems([]);
+          }
+        } else {
           setItems([]);
         }
-      } else {
-        setItems([]);
       }
-    }
 
-    setMounted(true);
+      setMounted(true);
+    };
+
+    initialize();
   }, [user, authLoading]);
 
   // Salvar carrinho anônimo no localStorage
@@ -182,10 +187,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // Usuário logado - usar API
       try {
         setLoading(true);
-        await apiFetch(`/cart/${id}`, {
-          method: "PUT",
-          body: JSON.stringify({ quantity }),
-        });
+
+        // Se quantidade <= 0, remover item
+        if (quantity <= 0) {
+          await apiFetch(`/cart/${id}`, {
+            method: "DELETE",
+          });
+        } else {
+          // Caso contrário, atualizar quantidade
+          await apiFetch(`/cart/${id}`, {
+            method: "PUT",
+            body: JSON.stringify({ quantity }),
+          });
+        }
 
         // Recarregar carrinho do backend
         await loadCartFromBackend();
@@ -198,13 +212,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } else {
       // Usuário não logado - usar localStorage
       if (quantity <= 0) {
-        removeItem(id);
-        return;
+        setItems((prevItems) => prevItems.filter((item) => item.id !== id));
+      } else {
+        setItems((prevItems) =>
+          prevItems.map((item) => (item.id === id ? { ...item, quantity } : item))
+        );
       }
-
-      setItems((prevItems) =>
-        prevItems.map((item) => (item.id === id ? { ...item, quantity } : item))
-      );
     }
   };
 

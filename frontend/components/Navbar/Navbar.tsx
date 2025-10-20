@@ -1,8 +1,11 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/AuthContext";
+import { useCart } from "@/lib/contexts/CartContext";
 import { apiFetch } from "@/lib/http";
+import { Cart } from "@/components/Cart/Cart";
 import styles from "./Navbar.module.css";
 
 function CartIcon() {
@@ -26,13 +29,15 @@ function CartIcon() {
 
 export function Navbar() {
   const { user, loading, refreshUser } = useAuth();
+  const { items } = useCart();
   const router = useRouter();
+  const [showCart, setShowCart] = useState(false);
 
   const handleLogout = async () => {
     try {
       await apiFetch("/auth/logout", { method: "POST" });
       refreshUser();
-      router.push("/login");
+      router.push("/");
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
     }
@@ -40,59 +45,88 @@ export function Navbar() {
 
   const handleCartClick = () => {
     if (!user) {
-      router.push("/login?redirect=cart");
+      // Salvar a intenção de ir para o carrinho
+      router.push("/login?redirect=/cart");
+    } else if (user.isSeller) {
+      // Vendedores não têm carrinho
+      return;
     } else {
-      router.push("/cart");
+      setShowCart(!showCart);
     }
   };
 
   return (
-    <header className={styles.navbar}>
-      <Link href="/" className={styles.logo}>
-        Online Market
-      </Link>
+    <>
+      <header className={styles.navbar}>
+        <Link href="/" className={styles.logo}>
+          Online Market
+        </Link>
 
-      {!loading && (
-        <nav className={styles.nav}>
-          {user ? (
-            <>
-              <span className={styles.greeting}>Olá, {user.name}</span>
-              {user.isSeller ? (
-                <>
-                  <Link href="/products/new" className={styles.link}>
-                    Adicionar produto
-                  </Link>
-                  <Link href="/products/csv" className={styles.link}>
-                    Adicionar múltiplos produtos
-                  </Link>
-                </>
-              ) : (
-                <button onClick={handleCartClick} className={styles.cartBtn} aria-label="Carrinho">
-                  <CartIcon />
+        {!loading && (
+          <nav className={styles.nav}>
+            {user ? (
+              <>
+                <span className={styles.greeting}>Olá, {user.name}</span>
+                {user.isSeller ? (
+                  <>
+                    <Link href="/products/new" className={styles.link}>
+                      Adicionar produto
+                    </Link>
+                    <Link href="/products/csv" className={styles.link}>
+                      Adicionar múltiplos produtos
+                    </Link>
+                  </>
+                ) : (
+                  <div className={styles.cartWrapper}>
+                    <button onClick={handleCartClick} className={styles.cartBtn} aria-label="Carrinho">
+                      <CartIcon />
+                      {items.length > 0 && (
+                        <span className={styles.cartBadge}>{items.length}</span>
+                      )}
+                    </button>
+                  </div>
+                )}
+                <button onClick={handleLogout} className={styles.logoutBtn}>
+                  Sair
                 </button>
-              )}
-              <button onClick={handleLogout} className={styles.logoutBtn}>
-                Sair
-              </button>
-            </>
-          ) : (
-            <>
-              <button onClick={handleCartClick} className={styles.cartBtn} aria-label="Carrinho">
-                <CartIcon />
-              </button>
-              <Link href="/login" className={styles.link}>
-                Entrar
-              </Link>
-              <Link href="/register" className={styles.link}>
-                Criar conta
-              </Link>
-              <Link href="/register/seller" className={styles.link}>
-                Cadastrar como vendedor
-              </Link>
-            </>
-          )}
-        </nav>
+              </>
+            ) : (
+              <>
+                <div className={styles.cartWrapper}>
+                  <button onClick={handleCartClick} className={styles.cartBtn} aria-label="Carrinho">
+                    <CartIcon />
+                    {items.length > 0 && (
+                      <span className={styles.cartBadge}>{items.length}</span>
+                    )}
+                  </button>
+                </div>
+                <Link href="/login" className={styles.link}>
+                  Entrar
+                </Link>
+                <Link href="/register" className={styles.link}>
+                  Criar conta
+                </Link>
+                <Link href="/register/seller" className={styles.link}>
+                  Cadastrar como vendedor
+                </Link>
+              </>
+            )}
+          </nav>
+        )}
+      </header>
+
+      {showCart && user && !user.isSeller && (
+        <div className={styles.cartDropdown}>
+          <Cart />
+        </div>
       )}
-    </header>
+
+      {/* Mostrar carrinho para usuários não logados também */}
+      {showCart && !user && (
+        <div className={styles.cartDropdown}>
+          <Cart />
+        </div>
+      )}
+    </>
   );
 }

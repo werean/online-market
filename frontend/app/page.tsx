@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/AuthContext";
+import { useCart } from "@/lib/contexts/CartContext";
 import { listAllProducts, type Product } from "@/lib/products";
 import styles from "./page.module.css";
 
@@ -28,11 +29,25 @@ function formatBRL(value: number) {
 
 export default function HomePage() {
   const { user, loading: loadingSession } = useAuth();
+  const { addItem } = useCart();
   const router = useRouter();
   const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  const handleAddToCart = async (product: Product) => {
+    try {
+      await addItem({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0],
+      });
+    } catch (error) {
+      console.error("Erro ao adicionar ao carrinho:", error);
+    }
+  };
 
   useEffect(() => {
     if (loadingSession) return;
@@ -97,7 +112,11 @@ export default function HomePage() {
                   >
                     Comprar
                   </button>
-                  <button className={styles.cartButton} aria-label="Adicionar ao carrinho">
+                  <button 
+                    className={styles.cartButton} 
+                    aria-label="Adicionar ao carrinho"
+                    onClick={() => handleAddToCart(product)}
+                  >
                     <CartIcon />
                   </button>
                 </div>

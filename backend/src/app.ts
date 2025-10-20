@@ -4,8 +4,10 @@ import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import { env } from "./config/env";
 import { userRoutes } from "./modules/users/user.routes";
+import { sellerRoutes } from "./modules/sellers/seller.routes";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { productRoutes } from "./modules/products/product.routes";
+import { cartRoutes } from "./modules/cart/cart.routes";
 
 export function buildApp() {
   const app = fastify();
@@ -27,7 +29,9 @@ export function buildApp() {
 
   app.register(authRoutes, { prefix: "/auth" });
   app.register(userRoutes, { prefix: "/user" });
+  app.register(sellerRoutes, { prefix: "/seller" });
   app.register(productRoutes, { prefix: "/products" });
+  app.register(cartRoutes, { prefix: "/cart" });
 
   return app;
 }

@@ -4,3 +4,7 @@ node_modules
 docs
 
 backend/src/generated/prisma/
+
+# Logs dos scripts
+backend.log
+frontend.log

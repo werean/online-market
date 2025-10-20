@@ -18,16 +18,15 @@ export class AuthController {
 
       const login = await this.authService.login(email, password);
 
-      return reply
-        .setCookie("auth_token", login.token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          path: "/",
-          maxAge: 60 * 60 * 24 * 7,
-        })
-        .status(200)
-        .send({ message: "Login realizado com sucesso", user: login.user });
+      reply.setCookie("auth_token", login.token, {
+        httpOnly: true,
+        secure: false, // Desenvolvimento local
+        sameSite: "strict",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+
+      return reply.status(200).send({ message: "Login realizado com sucesso", user: login.user });
     } catch (err: any) {
       return reply.status(400).send({
         message: "Erro ao realizar login.",
@@ -35,15 +34,13 @@ export class AuthController {
       });
     }
   };
-
   logout = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      return reply
-        .clearCookie("auth_token", {
-          path: "/",
-        })
-        .status(200)
-        .send({ message: "Logout realizado com sucesso" });
+      reply.clearCookie("auth_token", {
+        path: "/",
+      });
+
+      return reply.status(200).send({ message: "Logout realizado com sucesso" });
     } catch (err: any) {
       return reply.status(400).send({
         message: "Erro ao realizar logout.",

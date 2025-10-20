@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useCart } from "@/lib/contexts/CartContext";
-import { listAllProducts, type Product } from "@/lib/products";
+import { listAllProducts, listMyProducts, type Product } from "@/lib/products";
 import styles from "./page.module.css";
 
 function CartIcon() {
@@ -94,37 +94,58 @@ export default function HomePage() {
 
   // Obter página da URL
   const page = parseInt(searchParams.get("page") || "1", 10);
+  const refresh = searchParams.get("refresh");
+
+  // Limpar cache quando refresh está presente
+  useEffect(() => {
+    if (refresh) {
+      productsCache.clear();
+      // Remover o parâmetro refresh da URL
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete("refresh");
+      window.history.replaceState({}, "", newUrl.pathname + newUrl.search);
+    }
+  }, [refresh]);
 
   // Função para buscar produtos com cache
-  const loadProducts = useCallback(async (pageNum: number) => {
-    // Verificar se está no cache e não expirou
-    const cached = productsCache.get(pageNum);
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      setItems(cached.products);
-      setTotalPages(cached.totalPages);
-      setLoading(false);
-      return;
-    }
+  const loadProducts = useCallback(
+    async (pageNum: number) => {
+      // Verificar se está no cache e não expirou
+      const cached = productsCache.get(pageNum);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        setItems(cached.products);
+        setTotalPages(cached.totalPages);
+        setLoading(false);
+        return;
+      }
 
-    try {
-      const res = await listAllProducts(pageNum, 12);
-      const data = {
-        products: res.products || [],
-        totalPages: res.pagination?.totalPages || 1,
-        timestamp: Date.now(),
-      };
+      try {
+        let res;
+        if (user?.isSeller) {
+          res = await listMyProducts(pageNum, 10);
+        } else {
+          res = await listAllProducts(pageNum, 12);
+        }
 
-      // Salvar no cache
-      productsCache.set(pageNum, data);
+        const data = {
+          products: res.products || [],
+          totalPages: res.pagination?.totalPages || 1,
+          timestamp: Date.now(),
+        };
 
-      setItems(data.products);
-      setTotalPages(data.totalPages);
-    } catch {
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        // Salvar no cache
+        productsCache.set(pageNum, data);
+
+        setItems(data.products);
+        setTotalPages(data.totalPages);
+      } catch {
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user]
+  );
 
   // Prefetch da próxima página
   const prefetchNextPage = useCallback(async (currentPage: number, maxPages: number) => {
@@ -170,15 +191,16 @@ export default function HomePage() {
   useEffect(() => {
     if (loadingSession) return;
 
-    // Se for vendedor, redireciona para /products
-    if (user?.isSeller) {
-      router.push("/products");
-      return;
-    }
-
     setLoading(true);
     loadProducts(page);
   }, [user, loadingSession, page, loadProducts]);
+
+  // Redirecionar para página 1 se a página atual for maior que o total
+  useEffect(() => {
+    if (!loading && totalPages > 0 && page > totalPages) {
+      router.push(`/?page=1`);
+    }
+  }, [loading, page, totalPages, router]);
 
   // Prefetch da próxima página após carregar
   useEffect(() => {
@@ -187,7 +209,7 @@ export default function HomePage() {
     }
   }, [loading, page, totalPages, prefetchNextPage]);
 
-  if (loadingSession || user?.isSeller) {
+  if (loadingSession) {
     return <div className={styles.center}>Carregando...</div>;
   }
 
@@ -195,7 +217,16 @@ export default function HomePage() {
     <main className={styles.main}>
       {loading && <div className={styles.center}>Carregando produtos...</div>}
 
-      {!loading && items.length === 0 && (
+      {!loading && items.length === 0 && user?.isSeller && (
+        <div className={styles.empty}>
+          <p>Você ainda não possui produtos cadastrados</p>
+          <Link href="/product/new" className={styles.addButton}>
+            Adicionar produto
+          </Link>
+        </div>
+      )}
+
+      {!loading && items.length === 0 && !user?.isSeller && (
         <div className={styles.empty}>Ainda não há produtos disponíveis</div>
       )}
 
@@ -211,7 +242,14 @@ export default function HomePage() {
           >
             {items.map((product) => (
               <article key={product.id} className={styles.productCard}>
-                <Link href={`/product/${product.id}?from=${page}`} className={styles.productLink}>
+                <Link
+                  href={
+                    user?.isSeller
+                      ? `/product/seller?id=${product.id}`
+                      : `/product/user?id=${product.id}&from=${page}`
+                  }
+                  className={styles.productLink}
+                >
                   <h3 className={styles.productName}>{product.name}</h3>
 
                   <div className={styles.productImage}>
@@ -223,20 +261,28 @@ export default function HomePage() {
                   </div>
 
                   <div className={styles.productPrice}>{formatBRL(product.price)}</div>
+                  {user?.isSeller && (
+                    <div className={styles.productStock}>Estoque: {product.stock}</div>
+                  )}
                 </Link>
 
-                <div className={styles.productActions}>
-                  <Link href={`/product/${product.id}?from=${page}`} className={styles.buyButton}>
-                    Comprar
-                  </Link>
-                  <button
-                    className={styles.cartButton}
-                    aria-label="Adicionar ao carrinho"
-                    onClick={() => handleAddToCart(product)}
-                  >
-                    <CartIcon />
-                  </button>
-                </div>
+                {!user?.isSeller && (
+                  <div className={styles.productActions}>
+                    <Link
+                      href={`/product/user?id=${product.id}&from=${page}`}
+                      className={styles.buyButton}
+                    >
+                      Comprar
+                    </Link>
+                    <button
+                      className={styles.cartButton}
+                      aria-label="Adicionar ao carrinho"
+                      onClick={() => handleAddToCart(product)}
+                    >
+                      <CartIcon />
+                    </button>
+                  </div>
+                )}
               </article>
             ))}
           </section>

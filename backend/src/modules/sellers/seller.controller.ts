@@ -101,4 +101,20 @@ export class SellerController {
       });
     }
   };
+
+  delete = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    try {
+      await this.sellerService.delete(request.params.id);
+      return reply.status(200).send({
+        success: true,
+        message: "Vendedor deletado com sucesso.",
+      });
+    } catch (err: any) {
+      return reply.status(400).send({
+        success: false,
+        message: "Erro ao deletar vendedor.",
+        error: err.message,
+      });
+    }
+  };
 }

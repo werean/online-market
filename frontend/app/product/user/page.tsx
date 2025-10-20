@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/contexts/CartContext";
 import { apiFetch } from "@/lib/http";
 import { Feedback } from "@/components/Feedback";
@@ -69,7 +69,6 @@ function OptimizedProductImage({ src, alt }: { src: string; alt: string }) {
 }
 
 export default function ProductDetailPage() {
-  const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addItem } = useCart();
@@ -80,18 +79,23 @@ export default function ProductDetailPage() {
   );
   const [selectedImage, setSelectedImage] = useState(0);
 
-  // Pegar a página de origem da URL
+  // Pegar o ID e a página de origem da URL
+  const productId = searchParams.get("id");
   const fromPage = searchParams.get("from") || "1";
 
   useEffect(() => {
     loadProduct();
-  }, [params.id]);
+  }, [productId]);
 
   const loadProduct = async () => {
     setLoading(true);
     try {
-      const response = await apiFetch<{ product: Product }>(`/products/${params.id}`);
-      setProduct(response.product);
+      const response = await apiFetch<{ success: boolean; data: Product; product?: Product }>(
+        `/products/${productId}`
+      );
+      // O backend pode retornar em `data` ou em `product`
+      const productData = response.data || (response as any).product;
+      setProduct(productData);
     } catch (error: any) {
       setFeedback({
         message: error.message || "Erro ao carregar produto.",

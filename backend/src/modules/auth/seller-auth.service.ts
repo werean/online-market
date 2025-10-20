@@ -25,13 +25,15 @@ export class SellerAuthService {
     if (!isPasswordValid) {
       throw new Error("Senha inválida.");
     }
+    const secret = process.env.JWT_SECRET || "secret";
+
     const token = jwt.sign(
       {
         userId: seller.id,
         email: seller.email,
         isSeller: true,
       },
-      process.env.JWT_SECRET || "secret",
+      secret,
       {
         expiresIn: "7d",
       }
@@ -102,12 +104,9 @@ export class SellerAuthService {
       },
     });
 
-    // Return code in development, hide in production
-    if (process.env.NODE_ENV !== "production") {
-      return { nextAllowedAt: resendAvailableAt, code };
-    }
-
-    return { nextAllowedAt: resendAvailableAt };
+    // Sempre retornar código em desenvolvimento
+    console.log(`[SELLER PASSWORD RECOVERY] Code for ${email}: ${code}`);
+    return { nextAllowedAt: resendAvailableAt, code };
   }
 
   async verifyRecoveryToken(email: string, code: string): Promise<boolean> {

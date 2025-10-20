@@ -45,12 +45,27 @@ export class UserController {
     try {
       const { id } = request.params;
       const data = request.body;
+
+      console.log(`[USER] update - userId: ${id}, data:`, data);
+
       if (!id || !data) {
         return reply.status(400).send({ message: "Usuário não encontrado ou dados inválidos. " });
       }
+
+      // Verificar se o usuário está tentando atualizar sua própria conta
+      if (request.user?.id !== id) {
+        console.log(
+          `[USER] Unauthorized update attempt - requestUser: ${request.user?.id}, targetId: ${id}`
+        );
+        return reply
+          .status(403)
+          .send({ message: "Você não tem permissão para atualizar este perfil." });
+      }
+
       const updatedUser = await this.userService.update(id, data);
-      return reply.status(201).send({ updatedUser });
+      return reply.status(200).send({ success: true, updatedUser });
     } catch (err: any) {
+      console.error(`[USER] update error:`, err.message || err);
       return reply
         .code(400)
         .send({ message: "Não foi possível atualizar o usuário.", error: err.message });

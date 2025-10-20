@@ -5,7 +5,10 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch ./server.ts"
+    "dev": "tsx watch ./server.ts",
+    "prisma": "prisma",
+    "prisma generate": "prisma generate",
+    "prisma migrate deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

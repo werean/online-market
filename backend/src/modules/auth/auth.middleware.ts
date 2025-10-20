@@ -6,32 +6,26 @@ export async function verifyJWT(request: FastifyRequest, reply: FastifyReply) {
   try {
     let token = request.cookies.auth_token;
 
-    console.log(`[AUTH] verifyJWT - path: ${request.url}, method: ${request.method}`);
-    console.log(`[AUTH] token from cookie: ${token ? "exists" : "missing"}`);
-
     if (!token) {
       const authHeader = request.headers.authorization;
       if (authHeader && authHeader.startsWith("Bearer ")) {
         token = authHeader.substring(7);
-        console.log(`[AUTH] token from header: exists`);
       }
     }
 
     if (!token) {
-      console.log(`[AUTH] No token found - returning 401`);
       return reply.status(401).send({
         success: false,
         message: "Token de autenticação não fornecido.",
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as {
+    const secret = process.env.JWT_SECRET || "secret";
+    const decoded = jwt.verify(token, secret) as {
       userId: string;
       email: string;
       isSeller: boolean;
     };
-
-    console.log(`[AUTH] Token verified - userId: ${decoded.userId}, isSeller: ${decoded.isSeller}`);
 
     // Se for seller, buscar na tabela Seller
     if (decoded.isSeller) {
@@ -45,7 +39,6 @@ export async function verifyJWT(request: FastifyRequest, reply: FastifyReply) {
       });
 
       if (!seller) {
-        console.log(`[AUTH] Seller not found - userId: ${decoded.userId}`);
         return reply.status(401).send({
           success: false,
           message: "Vendedor não encontrado.",
@@ -53,7 +46,6 @@ export async function verifyJWT(request: FastifyRequest, reply: FastifyReply) {
       }
 
       if (seller.isDeleted) {
-        console.log(`[AUTH] Seller is deleted - userId: ${decoded.userId}`);
         return reply.status(403).send({
           success: false,
           message: "Vendedor inativo.",
@@ -66,8 +58,6 @@ export async function verifyJWT(request: FastifyRequest, reply: FastifyReply) {
         email: seller.email,
         isSeller: true,
       };
-
-      console.log(`[AUTH] Seller authenticated - id: ${seller.id}`);
     } else {
       // Se for user, buscar na tabela User
       const user = await prisma.user.findUnique({
@@ -80,7 +70,6 @@ export async function verifyJWT(request: FastifyRequest, reply: FastifyReply) {
       });
 
       if (!user) {
-        console.log(`[AUTH] User not found - userId: ${decoded.userId}`);
         return reply.status(401).send({
           success: false,
           message: "Usuário não encontrado.",
@@ -88,7 +77,6 @@ export async function verifyJWT(request: FastifyRequest, reply: FastifyReply) {
       }
 
       if (user.isDeleted) {
-        console.log(`[AUTH] User is deleted - userId: ${decoded.userId}`);
         return reply.status(403).send({
           success: false,
           message: "Usuário inativo.",
@@ -101,8 +89,6 @@ export async function verifyJWT(request: FastifyRequest, reply: FastifyReply) {
         email: user.email,
         isSeller: false,
       };
-
-      console.log(`[AUTH] User authenticated - id: ${user.id}`);
     }
   } catch (err: any) {
     console.error(`[AUTH] verifyJWT error:`, err.message);

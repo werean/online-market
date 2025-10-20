@@ -59,4 +59,13 @@ export class SellerService {
 
     return this.sellerRepository.updateSeller(id, data);
   }
+
+  async delete(id: string) {
+    const seller = await this.sellerRepository.findById(id);
+    if (!seller) {
+      throw new Error("Vendedor não encontrado.");
+    }
+
+    return this.sellerRepository.deleteSeller(id);
+  }
 }

@@ -62,8 +62,14 @@ export class ProductRepository {
     return { products, total };
   }
 
-  async findAllBySeller(sellerId: string) {
-    return this.prisma.product.findMany({
+  async findAllBySeller(sellerId: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+
+    console.log(
+      `[REPOSITORY] Buscando produtos - sellerId: ${sellerId}, skip: ${skip}, take: ${limit}`
+    );
+
+    const products = await this.prisma.product.findMany({
       where: { sellerId },
       include: {
         seller: {
@@ -75,6 +81,18 @@ export class ProductRepository {
         },
       },
       orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    });
+
+    console.log(`[REPOSITORY] Encontrados ${products.length} produtos para o vendedor ${sellerId}`);
+
+    return products;
+  }
+
+  async countBySeller(sellerId: string) {
+    return this.prisma.product.count({
+      where: { sellerId },
     });
   }
 

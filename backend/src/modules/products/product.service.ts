@@ -91,10 +91,11 @@ export class ProductService {
     };
   }
 
-  async getSellerProducts(userId: string) {
-    const products = await this.productRepository.findAllBySeller(userId);
+  async getSellerProducts(userId: string, page = 1, limit = 10) {
+    const products = await this.productRepository.findAllBySeller(userId, page, limit);
+    const total = await this.productRepository.countBySeller(userId);
 
-    return products.map((product) => {
+    const mappedProducts = products.map((product) => {
       let images: string[] = [];
 
       try {
@@ -109,6 +110,16 @@ export class ProductService {
         lowStock: product.stock <= 10,
       };
     });
+
+    return {
+      products: mappedProducts,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
   }
 
   async getProductById(id: string) {

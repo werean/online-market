@@ -43,12 +43,20 @@ export async function listAllProducts(page = 1, limit = 12) {
 
 // 2) Produtos do vendedor logado - usando a rota real do backend: GET /products/mine
 export async function listMyProducts(page = 1, limit = 12) {
-  const response = await apiFetch<{ success: boolean; message: string; data: Product[] }>(
-    `/products/mine?page=${page}&limit=${limit}`
-  );
+  const response = await apiFetch<{
+    success: boolean;
+    message: string;
+    data: Product[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      itemsPerPage: number;
+    };
+  }>(`/products/mine?page=${page}&limit=${limit}`);
   return {
     products: response.data || [],
-    pagination: undefined,
+    pagination: response.pagination,
   };
 }
 

@@ -11,6 +11,7 @@ export async function sellerRoutes(fastify: FastifyInstance) {
 
   fastify.post("/register", sellerController.create);
   fastify.put("/update/:id", sellerController.update);
+  fastify.delete("/:id", sellerController.delete);
   fastify.get("/", sellerController.getAll);
   fastify.get("/:id", sellerController.getOne);
 }

@@ -85,20 +85,20 @@ export function Navbar() {
             {user ? (
               <>
                 <span className={styles.greeting}>Olá, {user.name}</span>
+                <Link href="/profile" className={styles.profileBtn} aria-label="Perfil">
+                  <ProfileIcon />
+                </Link>
                 {user.isSeller ? (
                   <>
-                    <Link href="/products/new" className={styles.link}>
-                      Adicionar produto
+                    <Link href="/product/new" className={styles.link}>
+                      Novo Produto
                     </Link>
-                    <Link href="/products/csv" className={styles.link}>
-                      Adicionar múltiplos produtos
+                    <Link href="/product/csv" className={styles.link}>
+                      Enviar CSV
                     </Link>
                   </>
                 ) : (
                   <div className={styles.cartWrapper}>
-                    <Link href="/profile" className={styles.profileBtn} aria-label="Perfil">
-                      <ProfileIcon />
-                    </Link>
                     <button
                       onClick={handleCartClick}
                       className={styles.cartBtn}

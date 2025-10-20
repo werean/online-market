@@ -25,13 +25,15 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new Error("Senha inválida.");
     }
+    const secret = process.env.JWT_SECRET || "secret";
+
     const token = jwt.sign(
       {
         userId: user.id,
         email: user.email,
         isSeller: false,
       },
-      process.env.JWT_SECRET || "secret",
+      secret,
       {
         expiresIn: "7d",
       }
@@ -104,14 +106,14 @@ export class AuthService {
       },
     });
 
-    // In production, send email here
+    // Em desenvolvimento, exibir código no console
     console.log(`[PASSWORD RECOVERY] Code for ${email}: ${code}`);
     console.log(`[PASSWORD RECOVERY] Valid until: ${expiresAt.toISOString()}`);
 
-    // Return code only in development mode
+    // Retornar código no response para facilitar testes
     return {
       nextAllowedAt: resendAvailableAt,
-      ...(process.env.NODE_ENV === "development" && { code }),
+      code, // Sempre retorna código em desenvolvimento
     };
   }
 

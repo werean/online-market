@@ -103,15 +103,26 @@ export class ProductController {
   /**
    * Listar produtos do vendedor autenticado
    */
-  getProduct = async (request: FastifyRequest, reply: FastifyReply) => {
+  getProduct = async (
+    request: FastifyRequest<{ Querystring: { page?: string; limit?: string } }>,
+    reply: FastifyReply
+  ) => {
     try {
       const userId = request.userId!;
-      const products = await this.productService.getSellerProducts(userId);
+      const page = parseInt(request.query.page || "1");
+      const limit = parseInt(request.query.limit || "10");
+
+      console.log(
+        `[PRODUCTS] Listando produtos do vendedor: ${userId}, page: ${page}, limit: ${limit}`
+      );
+
+      const result = await this.productService.getSellerProducts(userId, page, limit);
 
       return reply.status(200).send({
         success: true,
         message: "Produtos listados com sucesso.",
-        data: products,
+        data: result.products,
+        pagination: result.pagination,
       });
     } catch (err: any) {
       return reply.status(500).send({
@@ -133,7 +144,7 @@ export class ProductController {
       return reply.status(200).send({
         success: true,
         message: "Produto encontrado.",
-        product: product,
+        data: product,
       });
     } catch (err: any) {
       const status = err.message.includes("não encontrado") ? 404 : 500;

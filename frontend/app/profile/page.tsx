@@ -46,7 +46,9 @@ export default function ProfilePage() {
     setFeedback(null);
 
     try {
-      await apiFetch(`/users/update/${user?.id}`, {
+      const endpoint = user?.isSeller ? `/seller/update/${user?.id}` : `/user/update/${user?.id}`;
+
+      await apiFetch(endpoint, {
         method: "PUT",
         body: JSON.stringify(formData),
       });
@@ -68,7 +70,9 @@ export default function ProfilePage() {
     setFeedback(null);
 
     try {
-      await apiFetch(`/users/${user?.id}`, {
+      const endpoint = user?.isSeller ? `/seller/${user?.id}` : `/user/${user?.id}`;
+
+      await apiFetch(endpoint, {
         method: "DELETE",
       });
 

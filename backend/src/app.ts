@@ -3,6 +3,8 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import { env } from "./config/env";
+// Import prisma AFTER env to ensure DATABASE_URL is loaded
+import { prisma } from "./config/prisma";
 import { userRoutes } from "./modules/users/user.routes";
 import { sellerRoutes } from "./modules/sellers/seller.routes";
 import { authRoutes } from "./modules/auth/auth.routes";

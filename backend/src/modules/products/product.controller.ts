@@ -1,4 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
+import { MultipartFile } from "@fastify/multipart";
 import { ProductService } from "./product.service";
 import { createProductSchema, CreateProductDto } from "./dto/create-product.dto";
 import { updateProductSchema, UpdateProductDto } from "./dto/update-product.dto";

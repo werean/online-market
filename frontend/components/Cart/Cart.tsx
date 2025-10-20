@@ -81,7 +81,7 @@ export function Cart() {
               aria-label="Remover do carrinho"
               disabled={loading}
             >
-              ✕
+              Excluir
             </button>
           </div>
         ))}

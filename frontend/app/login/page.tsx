@@ -59,7 +59,7 @@ export default function LoginPage() {
         loginSuccess = true;
       } catch (error: any) {
         lastError = error;
-        
+
         // Se falhar, tentar como vendedor
         try {
           await apiFetch("/auth/seller/login", {

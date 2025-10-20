@@ -9,12 +9,7 @@ export class UserService {
     this.userRepository = userRepository;
   }
 
-  async create(data: {
-    name: string;
-    email: string;
-    address: string;
-    password: string;
-  }) {
+  async create(data: { name: string; email: string; address: string; password: string }) {
     // Check if email already exists
     const existingUser = await this.userRepository.findByEmail(data.email);
     if (existingUser) {

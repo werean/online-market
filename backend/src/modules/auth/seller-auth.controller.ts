@@ -84,10 +84,7 @@ export class SellerAuthController {
   /**
    * POST /auth/seller/verify-token - Verifies the recovery code
    */
-  verifyToken = async (
-    request: FastifyRequest<{ Body: VerifyTokenDto }>,
-    reply: FastifyReply
-  ) => {
+  verifyToken = async (request: FastifyRequest<{ Body: VerifyTokenDto }>, reply: FastifyReply) => {
     try {
       const { email, code } = verifyTokenSchema.parse(request.body);
       await this.sellerAuthService.verifyRecoveryToken(email, code);

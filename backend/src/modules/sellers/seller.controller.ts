@@ -18,7 +18,7 @@ export class SellerController {
     try {
       // Validar e remover campos extras
       const validatedData = CreateSellerSchema.parse(request.body);
-      
+
       const seller = await this.sellerService.create(validatedData);
       return reply.status(201).send({
         success: true,
@@ -27,7 +27,7 @@ export class SellerController {
       });
     } catch (err: any) {
       console.error("Erro ao criar vendedor:", err);
-      
+
       // Se for erro de validação Zod
       if (err.name === "ZodError") {
         return reply.status(400).send({
@@ -36,7 +36,7 @@ export class SellerController {
           errors: err.errors,
         });
       }
-      
+
       return reply.status(400).send({
         success: false,
         message: "Erro ao criar vendedor.",
@@ -62,10 +62,7 @@ export class SellerController {
     }
   };
 
-  getOne = async (
-    request: FastifyRequest<{ Params: { id: string } }>,
-    reply: FastifyReply
-  ) => {
+  getOne = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     try {
       const seller = await this.sellerService.getOne(request.params.id);
       return reply.status(200).send({

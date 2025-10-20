@@ -8,12 +8,7 @@ export class SellerService {
     this.sellerRepository = sellerRepository;
   }
 
-  async create(data: {
-    name: string;
-    email: string;
-    address: string;
-    password: string;
-  }) {
+  async create(data: { name: string; email: string; address: string; password: string }) {
     // Check if email already exists
     const existingSeller = await this.sellerRepository.findByEmail(data.email);
     if (existingSeller) {

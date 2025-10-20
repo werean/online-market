@@ -13,31 +13,29 @@ export class UserController {
       // Validate and parse the request body to remove any extra fields
       const validatedData = CreateUserSchema.parse(request.body);
       const newUser = await this.userService.create(validatedData);
-      return reply.code(201).send({ 
+      return reply.code(201).send({
         success: true,
         message: "Usuário criado com sucesso.",
-        data: newUser 
+        data: newUser,
       });
     } catch (err: any) {
       console.error("Erro ao criar usuário:", err);
-      
+
       // Se for erro de validação Zod, retornar mensagens específicas
       if (err.name === "ZodError") {
         const firstError = err.errors[0];
-        return reply.code(400).send({ 
+        return reply.code(400).send({
           success: false,
           message: firstError?.message || "Dados inválidos.",
-          errors: err.errors
+          errors: err.errors,
         });
       }
-      
-      return reply
-        .code(400)
-        .send({ 
-          success: false,
-          message: "Não foi possível criar o usuário.", 
-          error: err.message 
-        });
+
+      return reply.code(400).send({
+        success: false,
+        message: "Não foi possível criar o usuário.",
+        error: err.message,
+      });
     }
   };
   update = async (

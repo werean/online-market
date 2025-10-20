@@ -63,12 +63,7 @@ export class SellerRepository {
     });
   }
 
-  async createSeller(data: {
-    name: string;
-    email: string;
-    address: string;
-    password: string;
-  }) {
+  async createSeller(data: { name: string; email: string; address: string; password: string }) {
     return this.prisma.seller.create({
       data,
       select: {

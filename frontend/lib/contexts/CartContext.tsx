@@ -36,7 +36,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Carregar carrinho do backend quando usuário estiver logado
   const loadCartFromBackend = async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
       const response = await apiFetch<{ success: boolean; data: CartItem[] }>("/cart");
@@ -59,7 +59,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const items: CartItem[] = JSON.parse(anonymousCart);
-      
+
       // Adicionar cada item ao carrinho do usuário
       for (const item of items) {
         await apiFetch("/cart/add", {
@@ -73,7 +73,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       // Limpar carrinho anônimo
       localStorage.removeItem(ANONYMOUS_CART_KEY);
-      
+
       // Recarregar carrinho do backend
       await loadCartFromBackend();
     } catch (error) {
@@ -101,14 +101,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setItems([]);
       }
     }
-    
+
     setMounted(true);
   }, [user, authLoading]);
 
   // Salvar carrinho anônimo no localStorage
   useEffect(() => {
     if (!mounted || authLoading) return;
-    
+
     // Só salvar no localStorage se o usuário NÃO estiver logado
     if (!user && items.length > 0) {
       localStorage.setItem(ANONYMOUS_CART_KEY, JSON.stringify(items));
@@ -145,9 +145,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         if (existingItem) {
           return prevItems.map((item) =>
-            item.id === newItem.id
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
+            item.id === newItem.id ? { ...item, quantity: item.quantity + 1 } : item
           );
         }
 
@@ -205,9 +203,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
 
       setItems((prevItems) =>
-        prevItems.map((item) =>
-          item.id === id ? { ...item, quantity } : item
-        )
+        prevItems.map((item) => (item.id === id ? { ...item, quantity } : item))
       );
     }
   };

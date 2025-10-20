@@ -9,7 +9,7 @@ export class CartService {
 
   async getCart(userId: string) {
     const items = await this.cartRepository.getCartItems(userId);
-    
+
     return items.map((item) => ({
       id: item.product.id,
       name: item.product.name,
@@ -22,7 +22,7 @@ export class CartService {
 
   async addItem(userId: string, productId: string, quantity: number = 1) {
     const item = await this.cartRepository.addItem(userId, productId, quantity);
-    
+
     return {
       id: item.product.id,
       name: item.product.name,
@@ -40,7 +40,7 @@ export class CartService {
     }
 
     const item = await this.cartRepository.updateQuantity(userId, productId, quantity);
-    
+
     return {
       id: item.product.id,
       name: item.product.name,

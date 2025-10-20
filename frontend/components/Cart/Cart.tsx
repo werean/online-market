@@ -73,9 +73,7 @@ export function Cart() {
               </button>
             </div>
 
-            <div className={styles.itemTotal}>
-              {formatBRL(item.price * item.quantity)}
-            </div>
+            <div className={styles.itemTotal}>{formatBRL(item.price * item.quantity)}</div>
 
             <button
               onClick={() => handleRemoveItem(item.id)}

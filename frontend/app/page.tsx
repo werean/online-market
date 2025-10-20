@@ -112,8 +112,8 @@ export default function HomePage() {
                   >
                     Comprar
                   </button>
-                  <button 
-                    className={styles.cartButton} 
+                  <button
+                    className={styles.cartButton}
                     aria-label="Adicionar ao carrinho"
                     onClick={() => handleAddToCart(product)}
                   >

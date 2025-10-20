@@ -21,33 +21,24 @@ export async function cartRoutes(fastify: FastifyInstance) {
   // POST /cart/add - Adicionar item ao carrinho
   fastify.post<{
     Body: { productId: string; quantity?: number };
-  }>(
-    "/add",
-    async (request, reply) => {
-      return cartController.addItem(request, reply);
-    }
-  );
+  }>("/add", async (request, reply) => {
+    return cartController.addItem(request, reply);
+  });
 
   // PUT /cart/:productId - Atualizar quantidade de um item
   fastify.put<{
     Params: { productId: string };
     Body: { quantity: number };
-  }>(
-    "/:productId",
-    async (request, reply) => {
-      return cartController.updateQuantity(request, reply);
-    }
-  );
+  }>("/:productId", async (request, reply) => {
+    return cartController.updateQuantity(request, reply);
+  });
 
   // DELETE /cart/:productId - Remover item do carrinho
   fastify.delete<{
     Params: { productId: string };
-  }>(
-    "/:productId",
-    async (request, reply) => {
-      return cartController.removeItem(request, reply);
-    }
-  );
+  }>("/:productId", async (request, reply) => {
+    return cartController.removeItem(request, reply);
+  });
 
   // DELETE /cart - Limpar carrinho
   fastify.delete("/", async (request, reply) => {

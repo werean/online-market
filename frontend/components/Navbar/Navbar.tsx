@@ -78,11 +78,13 @@ export function Navbar() {
                   </>
                 ) : (
                   <div className={styles.cartWrapper}>
-                    <button onClick={handleCartClick} className={styles.cartBtn} aria-label="Carrinho">
+                    <button
+                      onClick={handleCartClick}
+                      className={styles.cartBtn}
+                      aria-label="Carrinho"
+                    >
                       <CartIcon />
-                      {items.length > 0 && (
-                        <span className={styles.cartBadge}>{items.length}</span>
-                      )}
+                      {items.length > 0 && <span className={styles.cartBadge}>{items.length}</span>}
                     </button>
                   </div>
                 )}
@@ -93,11 +95,13 @@ export function Navbar() {
             ) : (
               <>
                 <div className={styles.cartWrapper}>
-                  <button onClick={handleCartClick} className={styles.cartBtn} aria-label="Carrinho">
+                  <button
+                    onClick={handleCartClick}
+                    className={styles.cartBtn}
+                    aria-label="Carrinho"
+                  >
                     <CartIcon />
-                    {items.length > 0 && (
-                      <span className={styles.cartBadge}>{items.length}</span>
-                    )}
+                    {items.length > 0 && <span className={styles.cartBadge}>{items.length}</span>}
                   </button>
                 </div>
                 <Link href="/login" className={styles.link}>

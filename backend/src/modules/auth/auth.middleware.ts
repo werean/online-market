@@ -23,38 +23,72 @@ export async function verifyJWT(request: FastifyRequest, reply: FastifyReply) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as {
       userId: string;
       email: string;
+      isSeller: boolean;
     };
 
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        id: true,
-        email: true,
+    // Se for seller, buscar na tabela Seller
+    if (decoded.isSeller) {
+      const seller = await prisma.seller.findUnique({
+        where: { id: decoded.userId },
+        select: {
+          id: true,
+          email: true,
+          isDeleted: true,
+        },
+      });
+
+      if (!seller) {
+        return reply.status(401).send({
+          success: false,
+          message: "Vendedor não encontrado.",
+        });
+      }
+
+      if (seller.isDeleted) {
+        return reply.status(403).send({
+          success: false,
+          message: "Vendedor inativo.",
+        });
+      }
+
+      request.userId = seller.id;
+      request.user = {
+        id: seller.id,
+        email: seller.email,
         isSeller: true,
-        isDeleted: true,
-      },
-    });
-
-    if (!user) {
-      return reply.status(401).send({
-        success: false,
-        message: "Usuário não encontrado.",
+      };
+    } else {
+      // Se for user, buscar na tabela User
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        select: {
+          id: true,
+          email: true,
+          isDeleted: true,
+        },
       });
-    }
 
-    if (user.isDeleted) {
-      return reply.status(403).send({
-        success: false,
-        message: "Usuário inativo.",
-      });
-    }
+      if (!user) {
+        return reply.status(401).send({
+          success: false,
+          message: "Usuário não encontrado.",
+        });
+      }
 
-    request.userId = user.id;
-    request.user = {
-      id: user.id,
-      email: user.email,
-      isSeller: user.isSeller,
-    };
+      if (user.isDeleted) {
+        return reply.status(403).send({
+          success: false,
+          message: "Usuário inativo.",
+        });
+      }
+
+      request.userId = user.id;
+      request.user = {
+        id: user.id,
+        email: user.email,
+        isSeller: false,
+      };
+    }
   } catch (err: any) {
     if (err.name === "JsonWebTokenError") {
       return reply.status(401).send({

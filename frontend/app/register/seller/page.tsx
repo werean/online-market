@@ -34,12 +34,9 @@ export default function RegisterSellerPage() {
     setFeedback(null);
 
     try {
-      await apiFetch("/user/register", {
+      await apiFetch("/seller/register", {
         method: "POST",
-        body: JSON.stringify({
-          ...data,
-          isSeller: true,
-        }),
+        body: JSON.stringify(data),
       });
 
       setIsRedirecting(true);

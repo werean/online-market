@@ -1,6 +1,6 @@
 import { PrismaClient } from "../../generated/prisma";
 
-export class UserRepository {
+export class SellerRepository {
   private prisma: PrismaClient;
 
   constructor(prisma: PrismaClient) {
@@ -8,7 +8,7 @@ export class UserRepository {
   }
 
   async findByEmail(email: string) {
-    return this.prisma.user.findUnique({
+    return this.prisma.seller.findUnique({
       where: { email },
       select: {
         id: true,
@@ -24,13 +24,13 @@ export class UserRepository {
   }
 
   async findWithPassword(email: string) {
-    return this.prisma.user.findUnique({
+    return this.prisma.seller.findUnique({
       where: { email },
     });
   }
 
   async findById(id: string) {
-    return this.prisma.user.findUnique({
+    return this.prisma.seller.findUnique({
       where: { id },
       select: {
         id: true,
@@ -46,7 +46,7 @@ export class UserRepository {
   }
 
   async findAll() {
-    return this.prisma.user.findMany({
+    return this.prisma.seller.findMany({
       where: {
         isDeleted: false,
       },
@@ -63,13 +63,13 @@ export class UserRepository {
     });
   }
 
-  async createUser(data: {
+  async createSeller(data: {
     name: string;
     email: string;
     address: string;
     password: string;
   }) {
-    return this.prisma.user.create({
+    return this.prisma.seller.create({
       data,
       select: {
         id: true,
@@ -84,8 +84,8 @@ export class UserRepository {
     });
   }
 
-  async updateUser(id: string, data: Partial<{ name: string; email: string; address: string }>) {
-    return this.prisma.user.update({
+  async updateSeller(id: string, data: Partial<{ name: string; email: string; address: string }>) {
+    return this.prisma.seller.update({
       where: { id },
       data,
       select: {
@@ -101,8 +101,8 @@ export class UserRepository {
     });
   }
 
-  async deleteUser(id: string) {
-    return this.prisma.user.update({
+  async deleteSeller(id: string) {
+    return this.prisma.seller.update({
       where: { id },
       data: {
         isDeleted: true,
@@ -122,7 +122,7 @@ export class UserRepository {
   }
 
   async updatePassword(email: string, hashedPassword: string) {
-    return this.prisma.user.update({
+    return this.prisma.seller.update({
       where: { email },
       data: { password: hashedPassword },
     });

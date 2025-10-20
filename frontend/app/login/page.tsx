@@ -47,10 +47,34 @@ export default function LoginPage() {
     setFeedback(null);
 
     try {
-      await apiFetch("/auth/login", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      // Tentar login como usuário comum primeiro
+      let loginSuccess = false;
+      let lastError = null;
+
+      try {
+        await apiFetch("/auth/login", {
+          method: "POST",
+          body: JSON.stringify(data),
+        });
+        loginSuccess = true;
+      } catch (error: any) {
+        lastError = error;
+        
+        // Se falhar, tentar como vendedor
+        try {
+          await apiFetch("/auth/seller/login", {
+            method: "POST",
+            body: JSON.stringify(data),
+          });
+          loginSuccess = true;
+        } catch (sellerError: any) {
+          lastError = sellerError;
+        }
+      }
+
+      if (!loginSuccess) {
+        throw lastError;
+      }
 
       setIsRedirecting(true);
       await refreshUser();

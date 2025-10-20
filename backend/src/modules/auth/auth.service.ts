@@ -29,7 +29,7 @@ export class AuthService {
       {
         userId: user.id,
         email: user.email,
-        isSeller: user.isSeller,
+        isSeller: false,
       },
       process.env.JWT_SECRET || "secret",
       {
@@ -43,7 +43,7 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
-        isSeller: user.isSeller,
+        isSeller: false,
       },
     };
   }
@@ -209,5 +209,18 @@ export class AuthService {
 
   async getUserById(userId: string) {
     return await this.userRepository.findById(userId);
+  }
+
+  async getSellerById(sellerId: string) {
+    return await this.prisma.seller.findUnique({
+      where: { id: sellerId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        address: true,
+        isDeleted: true,
+      },
+    });
   }
 }

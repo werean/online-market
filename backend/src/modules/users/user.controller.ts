@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { CreateUserDto } from "./dto/create-user.dto";
+import { CreateUserDto, CreateUserSchema } from "./dto/create-user.dto";
 import { UserService } from "./user.service";
 import { UpdateUserDto } from "./dto/update-user.dto";
 
@@ -10,12 +10,34 @@ export class UserController {
   }
   create = async (request: FastifyRequest<{ Body: CreateUserDto }>, reply: FastifyReply) => {
     try {
-      const newUser = await this.userService.create(request.body);
-      return reply.code(201).send({ newUser });
+      // Validate and parse the request body to remove any extra fields
+      const validatedData = CreateUserSchema.parse(request.body);
+      const newUser = await this.userService.create(validatedData);
+      return reply.code(201).send({ 
+        success: true,
+        message: "Usuário criado com sucesso.",
+        data: newUser 
+      });
     } catch (err: any) {
+      console.error("Erro ao criar usuário:", err);
+      
+      // Se for erro de validação Zod, retornar mensagens específicas
+      if (err.name === "ZodError") {
+        const firstError = err.errors[0];
+        return reply.code(400).send({ 
+          success: false,
+          message: firstError?.message || "Dados inválidos.",
+          errors: err.errors
+        });
+      }
+      
       return reply
-        .code(500)
-        .send({ message: "Não foi possível criar o usuário.", error: err.message });
+        .code(400)
+        .send({ 
+          success: false,
+          message: "Não foi possível criar o usuário.", 
+          error: err.message 
+        });
     }
   };
   update = async (

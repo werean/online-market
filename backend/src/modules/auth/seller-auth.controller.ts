@@ -1,22 +1,22 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { UserLoginDto, userLoginSchema } from "./dto/auth.dto";
-import { AuthService } from "./auth.service";
+import { SellerAuthService } from "./seller-auth.service";
 import { RecoverPasswordDto, recoverPasswordSchema } from "./dto/recover-password.dto";
 import { ResetPasswordDto, resetPasswordSchema } from "./dto/reset-password.dto";
 import { VerifyTokenDto, verifyTokenSchema } from "./dto/verify-token.dto";
 
-export class AuthController {
-  private authService: AuthService;
+export class SellerAuthController {
+  private sellerAuthService: SellerAuthService;
 
-  constructor(authService: AuthService) {
-    this.authService = authService;
+  constructor(sellerAuthService: SellerAuthService) {
+    this.sellerAuthService = sellerAuthService;
   }
 
   login = async (request: FastifyRequest<{ Body: UserLoginDto }>, reply: FastifyReply) => {
     try {
       const { email, password } = userLoginSchema.parse(request.body);
 
-      const login = await this.authService.login(email, password);
+      const login = await this.sellerAuthService.login(email, password);
 
       return reply
         .setCookie("auth_token", login.token, {
@@ -53,7 +53,7 @@ export class AuthController {
   };
 
   /**
-   * POST /auth/recover - Generates and sends a 6-digit recovery code
+   * POST /auth/seller/recover - Generates and sends a 6-digit recovery code
    */
   recoverPassword = async (
     request: FastifyRequest<{ Body: RecoverPasswordDto }>,
@@ -61,22 +61,20 @@ export class AuthController {
   ) => {
     try {
       const { email } = recoverPasswordSchema.parse(request.body);
-      const result = await this.authService.generateRecoveryToken(email);
+      const result = await this.sellerAuthService.generateRecoveryToken(email);
 
       return reply.status(200).send({
         message: "Se o e-mail existir, enviaremos um código de recuperação.",
         nextAllowedAt: result.nextAllowedAt,
-        ...(result.code && { code: result.code }), // Include code in development mode
+        ...(result.code && { code: result.code }),
       });
     } catch (err: any) {
-      // Return 429 for cooldown errors
       if (err.message.includes("Aguarde")) {
         return reply.status(429).send({
           message: err.message,
         });
       }
 
-      // Don't reveal if email exists for security
       return reply.status(200).send({
         message: "Se o e-mail existir, enviaremos um código de recuperação.",
       });
@@ -84,26 +82,29 @@ export class AuthController {
   };
 
   /**
-   * POST /auth/verify-token - Verifies the 6-digit code
+   * POST /auth/seller/verify-token - Verifies the recovery code
    */
-  verifyToken = async (request: FastifyRequest<{ Body: VerifyTokenDto }>, reply: FastifyReply) => {
+  verifyToken = async (
+    request: FastifyRequest<{ Body: VerifyTokenDto }>,
+    reply: FastifyReply
+  ) => {
     try {
       const { email, code } = verifyTokenSchema.parse(request.body);
-      const result = await this.authService.verifyRecoveryToken(email, code);
+      await this.sellerAuthService.verifyRecoveryToken(email, code);
 
       return reply.status(200).send({
-        message: "Código verificado com sucesso.",
-        verified: result.verified,
+        message: "Token verificado com sucesso.",
       });
     } catch (err: any) {
       return reply.status(400).send({
-        message: err.message || "Erro ao verificar código.",
+        message: "Falha ao verificar o token.",
+        error: err.message,
       });
     }
   };
 
   /**
-   * POST /auth/reset-password - Resets password after verification
+   * POST /auth/seller/reset-password - Resets the password with a valid token
    */
   resetPassword = async (
     request: FastifyRequest<{ Body: ResetPasswordDto }>,
@@ -111,66 +112,14 @@ export class AuthController {
   ) => {
     try {
       const { email, newPassword } = resetPasswordSchema.parse(request.body);
-      await this.authService.resetPassword(email, newPassword);
+      await this.sellerAuthService.resetPassword(email, newPassword);
 
       return reply.status(200).send({
         message: "Senha redefinida com sucesso.",
       });
     } catch (err: any) {
       return reply.status(400).send({
-        message: err.message || "Erro ao redefinir senha.",
-      });
-    }
-  };
-
-  getUser = async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      if (!request.userId || !request.user) {
-        return reply.status(401).send({
-          message: "Não autenticado.",
-        });
-      }
-
-      // Se for seller, buscar da tabela Seller
-      if (request.user.isSeller) {
-        const seller = await this.authService.getSellerById(request.userId);
-
-        if (!seller) {
-          return reply.status(404).send({
-            message: "Vendedor não encontrado.",
-          });
-        }
-
-        return reply.status(200).send({
-          user: {
-            id: seller.id,
-            name: seller.name,
-            email: seller.email,
-            isSeller: true,
-          },
-        });
-      }
-
-      // Se for user comum, buscar da tabela User
-      const user = await this.authService.getUserById(request.userId);
-
-      if (!user) {
-        return reply.status(404).send({
-          message: "Usuário não encontrado.",
-        });
-      }
-
-      return reply.status(200).send({
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          isSeller: false,
-        },
-      });
-    } catch (err: any) {
-      return reply.status(400).send({
-        message: "Erro ao buscar usuário.",
+        message: "Falha ao redefinir a senha.",
         error: err.message,
       });
     }

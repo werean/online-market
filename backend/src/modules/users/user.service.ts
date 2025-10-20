@@ -14,14 +14,18 @@ export class UserService {
     email: string;
     address: string;
     password: string;
-    isSeller?: boolean;
   }) {
+    // Check if email already exists
+    const existingUser = await this.userRepository.findByEmail(data.email);
+    if (existingUser) {
+      throw new Error("E-mail já cadastrado.");
+    }
+
     const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS) || 8;
     const hashedPass = await hash(data.password, saltRounds);
     return this.userRepository.createUser({
       ...data,
       password: hashedPass,
-      isSeller: data.isSeller || false,
     });
   }
 

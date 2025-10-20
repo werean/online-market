@@ -36,6 +36,10 @@ export class CartController {
       const userId = request.user!.id;
       const { productId, quantity = 1 } = request.body;
 
+      console.log(
+        `[CART] addItem - userId: ${userId}, productId: ${productId}, quantity: ${quantity}`
+      );
+
       if (!productId) {
         return reply.status(400).send({
           success: false,
@@ -57,11 +61,13 @@ export class CartController {
         message: "Item adicionado ao carrinho",
         data: item,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error(`[CART] addItem error:`, error.message || error);
       request.log.error(error);
       return reply.status(500).send({
         success: false,
         message: "Erro ao adicionar item ao carrinho",
+        error: error.message || "Unknown error",
       });
     }
   }
@@ -78,6 +84,10 @@ export class CartController {
       const { productId } = request.params;
       const { quantity } = request.body;
 
+      console.log(
+        `[CART] updateQuantity - userId: ${userId}, productId: ${productId}, quantity: ${quantity}`
+      );
+
       if (typeof quantity !== "number") {
         return reply.status(400).send({
           success: false,
@@ -92,11 +102,13 @@ export class CartController {
         message: quantity <= 0 ? "Item removido do carrinho" : "Quantidade atualizada",
         data: item,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error(`[CART] updateQuantity error:`, error.message || error);
       request.log.error(error);
       return reply.status(500).send({
         success: false,
         message: "Erro ao atualizar quantidade",
+        error: error.message || "Unknown error",
       });
     }
   }
@@ -111,17 +123,21 @@ export class CartController {
       const userId = request.user!.id;
       const { productId } = request.params;
 
+      console.log(`[CART] removeItem - userId: ${userId}, productId: ${productId}`);
+
       const result = await this.cartService.removeItem(userId, productId);
 
       return reply.status(200).send({
         success: true,
         message: result.message,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error(`[CART] removeItem error:`, error.message || error);
       request.log.error(error);
       return reply.status(500).send({
         success: false,
         message: "Erro ao remover item",
+        error: error.message || "Unknown error",
       });
     }
   }

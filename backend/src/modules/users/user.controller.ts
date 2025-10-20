@@ -87,12 +87,12 @@ export class UserController {
       if (!id) {
         return reply.status(400).send({ message: "ID é obrigatório." });
       }
-      
+
       await this.userService.delete(id);
 
-      return reply.status(200).send({ 
+      return reply.status(200).send({
         success: true,
-        message: "Perfil deletado com sucesso." 
+        message: "Perfil deletado com sucesso.",
       });
     } catch (err: any) {
       return reply.status(500).send({

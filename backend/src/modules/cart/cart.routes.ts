@@ -26,6 +26,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
   });
 
   // PUT /cart/:productId - Atualizar quantidade de um item
+  // NOTA: Deve vir ANTES de DELETE / para evitar conflitos
   fastify.put<{
     Params: { productId: string };
     Body: { quantity: number };
@@ -34,6 +35,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
   });
 
   // DELETE /cart/:productId - Remover item do carrinho
+  // NOTA: Deve vir ANTES de DELETE / para evitar conflitos
   fastify.delete<{
     Params: { productId: string };
   }>("/:productId", async (request, reply) => {
@@ -41,6 +43,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
   });
 
   // DELETE /cart - Limpar carrinho
+  // NOTA: Deve ser registrada por último para evitar conflitos com DELETE /:productId
   fastify.delete("/", async (request, reply) => {
     return cartController.clearCart(request, reply);
   });

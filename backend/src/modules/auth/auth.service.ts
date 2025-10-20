@@ -106,10 +106,6 @@ export class AuthService {
       },
     });
 
-    // Em desenvolvimento, exibir código no console
-    console.log(`[PASSWORD RECOVERY] Code for ${email}: ${code}`);
-    console.log(`[PASSWORD RECOVERY] Valid until: ${expiresAt.toISOString()}`);
-
     // Retornar código no response para facilitar testes
     return {
       nextAllowedAt: resendAvailableAt,

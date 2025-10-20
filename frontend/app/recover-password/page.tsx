@@ -47,17 +47,6 @@ export default function RecoverPasswordPage() {
         setNextAllowedAt(new Date(result.nextAllowedAt));
       }
 
-      // Log code to browser console in development
-      if (result.code) {
-        console.log("═══════════════════════════════════════════");
-        console.log("🔐 CÓDIGO DE RECUPERAÇÃO DE SENHA");
-        console.log("═══════════════════════════════════════════");
-        console.log(`📧 Email: ${data.email}`);
-        console.log(`🔢 Código: ${result.code}`);
-        console.log("⏰ Válido por 15 minutos");
-        console.log("═══════════════════════════════════════════");
-      }
-
       setFeedback({
         message: result.code
           ? "Código enviado! Verifique o console do navegador (F12)."

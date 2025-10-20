@@ -36,10 +36,6 @@ export class CartController {
       const userId = request.user!.id;
       const { productId, quantity = 1 } = request.body;
 
-      console.log(
-        `[CART] addItem - userId: ${userId}, productId: ${productId}, quantity: ${quantity}`
-      );
-
       if (!productId) {
         return reply.status(400).send({
           success: false,
@@ -84,10 +80,6 @@ export class CartController {
       const { productId } = request.params;
       const { quantity } = request.body;
 
-      console.log(
-        `[CART] updateQuantity - userId: ${userId}, productId: ${productId}, quantity: ${quantity}`
-      );
-
       if (typeof quantity !== "number") {
         return reply.status(400).send({
           success: false,
@@ -122,8 +114,6 @@ export class CartController {
     try {
       const userId = request.user!.id;
       const { productId } = request.params;
-
-      console.log(`[CART] removeItem - userId: ${userId}, productId: ${productId}`);
 
       const result = await this.cartService.removeItem(userId, productId);
 

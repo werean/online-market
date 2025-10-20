@@ -105,7 +105,7 @@ export class SellerAuthService {
     });
 
     // Sempre retornar código em desenvolvimento
-    console.log(`[SELLER PASSWORD RECOVERY] Code for ${email}: ${code}`);
+
     return { nextAllowedAt: resendAvailableAt, code };
   }
 

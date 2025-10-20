@@ -37,12 +37,21 @@ export default function CSVUploadPage() {
           <ol>
             <li>
               O arquivo CSV deve conter as colunas: <code>name</code>, <code>description</code>,{" "}
-              <code>price</code>, <code>stock</code>
+              <code>price</code>, <code>stock</code>, <code>images</code>
             </li>
             <li>O preço deve estar em centavos (ex: 1990 = R$ 19,90)</li>
-            <li>Use ponto e vírgula (;) como separador</li>
+            <li>Use vírgula (,) como separador</li>
             <li>A primeira linha deve ser o cabeçalho</li>
+            <li>Múltiplas imagens devem ser separadas por espaço</li>
           </ol>
+
+          <a
+            href="/exemplo-produtos.csv"
+            download="exemplo-produtos.csv"
+            className={styles.downloadButton}
+          >
+            📥 Baixar arquivo de exemplo
+          </a>
         </div>
 
         <CSVUploader
@@ -50,7 +59,6 @@ export default function CSVUploadPage() {
           requiredColumns={["name", "price", "stock"]}
           maxSizeMB={5}
           onResult={(data) => {
-            console.log("Upload concluído:", data);
             // Redirecionar após 3 segundos se houver sucesso
             if (data.success > 0) {
               setTimeout(() => {

@@ -31,9 +31,6 @@ function VerifyTokenContent() {
   const handleVerifyCode = async () => {
     if (!email || code.length !== 6) return;
 
-    console.log("[VERIFY] Enviando código:", code);
-    console.log("[VERIFY] Email:", email);
-
     setLoading(true);
     setFeedback(null);
 
@@ -43,33 +40,24 @@ function VerifyTokenContent() {
         body: JSON.stringify({ email, code }),
       });
 
-      console.log("[VERIFY] Result:", result);
-
       if (result.verified) {
         setFeedback({
           message: "Código verificado com sucesso!",
           type: "success",
         });
 
-        console.log("[VERIFY] Código verificado! Redirecionando em 1.5s...");
-
         // Redirect to reset password page
         setTimeout(() => {
-          console.log("[VERIFY] Redirecionando agora...");
           router.push(`/reset-password?email=${encodeURIComponent(email)}`);
         }, 1500);
       } else {
-        console.log("[VERIFY] Verified é false");
         setFeedback({
           message: "Código inválido. Tente novamente.",
           type: "error",
         });
       }
     } catch (error: any) {
-      console.log("[VERIFY] Erro capturado:", error);
-
       if (error instanceof ApiError) {
-        console.log("[VERIFY] ApiError data:", error.data);
         setFeedback({
           message: error.message || "Código inválido. Tente novamente.",
           type: "error",
@@ -107,13 +95,6 @@ function VerifyTokenContent() {
 
       // Log code to browser console in development
       if (result.code) {
-        console.log("═══════════════════════════════════════════");
-        console.log("🔐 CÓDIGO DE RECUPERAÇÃO DE SENHA (REENVIADO)");
-        console.log("═══════════════════════════════════════════");
-        console.log(`📧 Email: ${email}`);
-        console.log(`🔢 Código: ${result.code}`);
-        console.log("⏰ Válido por 15 minutos");
-        console.log("═══════════════════════════════════════════");
       }
 
       setFeedback({

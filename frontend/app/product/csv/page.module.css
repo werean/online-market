@@ -58,6 +58,28 @@
   color: var(--text);
 }
 
+.downloadButton {
+  display: inline-block;
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-soft);
+}
+
+.downloadButton:hover {
+  background: var(--primary-dark, #0056b3);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card);
+}
+
 .actions {
   margin-top: var(--spacing-xl);
   display: flex;

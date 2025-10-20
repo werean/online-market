@@ -11,6 +11,21 @@ declare module "fastify" {
   }
 
   interface FastifyReply {
+    setCookie(
+      name: string,
+      value: string,
+      options?: {
+        domain?: string;
+        path?: string;
+        maxAge?: number;
+        expires?: Date;
+        httpOnly?: boolean;
+        secure?: boolean;
+        sameSite?: boolean | "lax" | "strict" | "none";
+        signed?: boolean;
+      }
+    ): FastifyReply;
+
     clearCookie(
       name: string,
       options?: {

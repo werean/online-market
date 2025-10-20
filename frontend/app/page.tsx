@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useCart } from "@/lib/contexts/CartContext";
 import { listAllProducts, type Product } from "@/lib/products";
@@ -27,14 +28,125 @@ function formatBRL(value: number) {
   return (value / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+// Cache global para produtos
+const productsCache = new Map<
+  number,
+  { products: Product[]; totalPages: number; timestamp: number }
+>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+// Componente de imagem otimizada com lazy loading
+function OptimizedImage({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    // Reset quando a src muda
+    setLoaded(false);
+    setError(false);
+
+    // Criar uma nova imagem para preload
+    const img = new Image();
+    img.src = src;
+    img.onload = () => setLoaded(true);
+    img.onerror = () => setError(true);
+
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [src]);
+
+  if (error) {
+    return <span className={styles.noImage}>Sem imagem</span>;
+  }
+
+  if (!loaded) {
+    return (
+      <div className={styles.imagePlaceholder}>
+        <div className={styles.spinner}></div>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      style={{
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+      }}
+    />
+  );
+}
+
 export default function HomePage() {
   const { user, loading: loadingSession } = useAuth();
   const { addItem } = useCart();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isPending, startTransition] = useTransition();
+
+  // Obter página da URL
+  const page = parseInt(searchParams.get("page") || "1", 10);
+
+  // Função para buscar produtos com cache
+  const loadProducts = useCallback(async (pageNum: number) => {
+    // Verificar se está no cache e não expirou
+    const cached = productsCache.get(pageNum);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      setItems(cached.products);
+      setTotalPages(cached.totalPages);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await listAllProducts(pageNum, 12);
+      const data = {
+        products: res.products || [],
+        totalPages: res.pagination?.totalPages || 1,
+        timestamp: Date.now(),
+      };
+
+      // Salvar no cache
+      productsCache.set(pageNum, data);
+
+      setItems(data.products);
+      setTotalPages(data.totalPages);
+    } catch {
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Prefetch da próxima página
+  const prefetchNextPage = useCallback(async (currentPage: number, maxPages: number) => {
+    const nextPage = currentPage + 1;
+    if (nextPage > maxPages) return;
+
+    // Verificar se já está no cache
+    const cached = productsCache.get(nextPage);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) return;
+
+    // Buscar em background
+    try {
+      const res = await listAllProducts(nextPage, 12);
+      productsCache.set(nextPage, {
+        products: res.products || [],
+        totalPages: res.pagination?.totalPages || 1,
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      console.error("Erro ao fazer prefetch:", error);
+    }
+  }, []);
 
   const handleAddToCart = async (product: Product) => {
     try {
@@ -49,6 +161,12 @@ export default function HomePage() {
     }
   };
 
+  const changePage = (newPage: number) => {
+    startTransition(() => {
+      router.push(`/?page=${newPage}`, { scroll: false });
+    });
+  };
+
   useEffect(() => {
     if (loadingSession) return;
 
@@ -58,21 +176,16 @@ export default function HomePage() {
       return;
     }
 
-    loadProducts();
-  }, [user, loadingSession, page]);
-
-  const loadProducts = async () => {
     setLoading(true);
-    try {
-      const res = await listAllProducts(page, 12);
-      setItems(res.products || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-    } catch {
-      setItems([]);
-    } finally {
-      setLoading(false);
+    loadProducts(page);
+  }, [user, loadingSession, page, loadProducts]);
+
+  // Prefetch da próxima página após carregar
+  useEffect(() => {
+    if (!loading && totalPages > 0 && page < totalPages) {
+      prefetchNextPage(page, totalPages);
     }
-  };
+  }, [loading, page, totalPages, prefetchNextPage]);
 
   if (loadingSession || user?.isSeller) {
     return <div className={styles.center}>Carregando...</div>;
@@ -80,8 +193,6 @@ export default function HomePage() {
 
   return (
     <main className={styles.main}>
-      <h1 className={styles.title}>Produtos Disponíveis</h1>
-
       {loading && <div className={styles.center}>Carregando produtos...</div>}
 
       {!loading && items.length === 0 && (
@@ -90,28 +201,34 @@ export default function HomePage() {
 
       {!loading && items.length > 0 && (
         <>
-          <section className={styles.grid}>
+          <section
+            className={styles.grid}
+            style={{
+              opacity: isPending ? 0.6 : 1,
+              transition: "opacity 0.2s ease-in-out",
+              pointerEvents: isPending ? "none" : "auto",
+            }}
+          >
             {items.map((product) => (
               <article key={product.id} className={styles.productCard}>
-                <h3 className={styles.productName}>{product.name}</h3>
+                <Link href={`/product/${product.id}?from=${page}`} className={styles.productLink}>
+                  <h3 className={styles.productName}>{product.name}</h3>
 
-                <div className={styles.productImage}>
-                  {product.images?.[0] ? (
-                    <img src={product.images[0]} alt={product.name} />
-                  ) : (
-                    <span className={styles.noImage}>Sem imagem</span>
-                  )}
-                </div>
+                  <div className={styles.productImage}>
+                    {product.images?.[0] ? (
+                      <OptimizedImage src={product.images[0]} alt={product.name} />
+                    ) : (
+                      <span className={styles.noImage}>Sem imagem</span>
+                    )}
+                  </div>
 
-                <div className={styles.productPrice}>{formatBRL(product.price)}</div>
+                  <div className={styles.productPrice}>{formatBRL(product.price)}</div>
+                </Link>
 
                 <div className={styles.productActions}>
-                  <button
-                    className={styles.buyButton}
-                    onClick={() => router.push(`/product/${product.id}`)}
-                  >
+                  <Link href={`/product/${product.id}?from=${page}`} className={styles.buyButton}>
                     Comprar
-                  </button>
+                  </Link>
                   <button
                     className={styles.cartButton}
                     aria-label="Adicionar ao carrinho"
@@ -127,8 +244,8 @@ export default function HomePage() {
           {totalPages > 1 && (
             <div className={styles.pagination}>
               <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
+                onClick={() => changePage(Math.max(1, page - 1))}
+                disabled={page === 1 || isPending}
                 className={styles.pageButton}
               >
                 Anterior
@@ -137,8 +254,8 @@ export default function HomePage() {
                 Página {page} de {totalPages}
               </span>
               <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
+                onClick={() => changePage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages || isPending}
                 className={styles.pageButton}
               >
                 Próxima

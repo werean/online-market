@@ -73,7 +73,7 @@ export default function ProfilePage() {
       });
 
       setFeedback({ message: "Perfil deletado com sucesso!", type: "success" });
-      
+
       // Fazer logout e redirecionar
       setTimeout(async () => {
         await apiFetch("/auth/logout", { method: "POST" });
@@ -136,9 +136,7 @@ export default function ProfilePage() {
             required
           />
 
-          <SubmitButton loading={isSubmitting}>
-            Salvar alterações
-          </SubmitButton>
+          <SubmitButton loading={isSubmitting}>Salvar alterações</SubmitButton>
         </form>
 
         <div className={styles.deleteSection}>

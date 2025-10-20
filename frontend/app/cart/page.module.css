@@ -1,7 +1,10 @@
 .center {
   display: grid;
   place-items: center;
-  height: 40vh;
+  min-height: calc(100vh - 64px);
+  margin-top: 64px;
+  padding: var(--spacing-xl);
+  background: var(--bg);
   color: var(--muted);
   font-size: 1.05rem;
 }

@@ -111,6 +111,20 @@ export class ProductService {
     });
   }
 
+  async getProductById(id: string) {
+    const product = await this.productRepository.findById(id);
+
+    if (!product) {
+      throw new Error("Produto não encontrado.");
+    }
+
+    return {
+      ...product,
+      images: this.safeParseImages(product.images),
+      lowStock: product.stock <= 10,
+    };
+  }
+
   async getAllProductsPaginated(
     page: number = 1,
     limit: number = 10,

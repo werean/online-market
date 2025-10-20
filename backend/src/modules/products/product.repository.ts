@@ -54,15 +54,6 @@ export class ProductRepository {
         where,
         skip,
         take: limit,
-        include: {
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
         orderBy: { createdAt: "desc" },
       }),
       this.prisma.product.count({ where }),

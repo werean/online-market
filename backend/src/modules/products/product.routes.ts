@@ -11,6 +11,7 @@ export async function productRoutes(fastify: FastifyInstance) {
   const productController = new ProductController(productService);
 
   fastify.get("/", productController.getAll);
+  fastify.get("/:id", productController.getById);
 
   fastify.post("/", {
     preHandler: [verifySellerAccess],

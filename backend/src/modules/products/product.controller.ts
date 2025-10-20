@@ -123,6 +123,29 @@ export class ProductController {
   };
 
   /**
+   * Buscar produto específico por ID (público)
+   */
+  getById = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    try {
+      const { id } = request.params;
+      const product = await this.productService.getProductById(id);
+
+      return reply.status(200).send({
+        success: true,
+        message: "Produto encontrado.",
+        product: product,
+      });
+    } catch (err: any) {
+      const status = err.message.includes("não encontrado") ? 404 : 500;
+      return reply.status(status).send({
+        success: false,
+        message: "Erro ao buscar produto.",
+        error: err.message,
+      });
+    }
+  };
+
+  /**
    * Listar todos os produtos (público) com paginação e filtros
    */
   getAll = async (

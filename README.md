@@ -963,12 +963,6 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 
 ---
 
-## 📝 Licença
-
-Este projeto está sob a licença MIT.
-
----
-
 ## 👨‍💻 Autor
 
 Desenvolvido por [werean](https://github.com/werean)

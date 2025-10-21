@@ -107,6 +107,18 @@ export default function HomePage() {
     }
   }, [refresh]);
 
+  // Listener para limpar cache quando login/logout ocorrer
+  useEffect(() => {
+    const handleClearCache = () => {
+      productsCache.clear();
+      setItems([]);
+      setLoading(true);
+    };
+
+    window.addEventListener("clearProductsCache", handleClearCache);
+    return () => window.removeEventListener("clearProductsCache", handleClearCache);
+  }, []);
+
   // Função para buscar produtos com cache
   const loadProducts = useCallback(
     async (pageNum: number) => {

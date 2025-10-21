@@ -9,7 +9,8 @@ export const createProductSchema = z.object({
   price: z.number().int().positive("O preço deve ser maior que zero."),
   images: z
     .array(z.string().url("URL de imagem inválida."))
-    .min(1, "Pelo menos uma imagem é obrigatória."),
+    .min(1, "Pelo menos uma imagem é obrigatória.")
+    .max(10, "Máximo de 10 imagens por produto."),
   stock: z.number().int().min(0, "O estoque não pode ser negativo."),
 });
 

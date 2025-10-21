@@ -196,12 +196,6 @@ export function CSVUploader({
             </div>
           </div>
 
-          {result.lowStockProducts && result.lowStockProducts.length > 0 && (
-            <div className={styles.lowStock}>
-              <strong>⚠️ Baixo estoque:</strong> {result.lowStockProducts.join(", ")}
-            </div>
-          )}
-
           {result.errors && result.errors.length > 0 && (
             <details className={styles.errors}>
               <summary>Erros ({result.errors.length})</summary>

@@ -7,7 +7,7 @@ import styles from "./page.module.css";
 
 export default function CSVUploadPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, clearCache } = useAuth();
 
   useEffect(() => {
     if (!loading && !user?.isSeller) {
@@ -36,13 +36,32 @@ export default function CSVUploadPage() {
           <h2>Instruções:</h2>
           <ol>
             <li>
-              O arquivo CSV deve conter as colunas: <code>name</code>, <code>description</code>,{" "}
-              <code>price</code>, <code>stock</code>, <code>images</code>
+              <strong>Formato do arquivo:</strong> A primeira linha deve conter os cabeçalhos
             </li>
-            <li>O preço deve estar em centavos (ex: 1990 = R$ 19,90)</li>
-            <li>Use vírgula (,) como separador</li>
-            <li>A primeira linha deve ser o cabeçalho</li>
-            <li>Múltiplas imagens devem ser separadas por espaço</li>
+            <li>
+              <strong>Colunas obrigatórias:</strong> <code>name</code>, <code>price</code>,{" "}
+              <code>stock</code>, <code>images</code>
+            </li>
+            <li>
+              <strong>Coluna opcional:</strong> <code>description</code>
+            </li>
+            <li>
+              <strong>Preço:</strong> Deve estar em centavos (ex: 1990 = R$ 19,90)
+            </li>
+            <li>
+              <strong>Separador de colunas:</strong> Use vírgula (,)
+            </li>
+            <li>
+              <strong>Imagens:</strong> Separe múltiplas URLs por <strong>espaço</strong>
+            </li>
+            <li>
+              <strong>Exemplo de linha:</strong>
+              <br />
+              <code style={{ fontSize: "0.85em" }}>
+                Notebook Dell,Notebook 16GB RAM,449990,30,https://exemplo.com/img1.jpg
+                https://exemplo.com/img2.jpg
+              </code>
+            </li>
           </ol>
 
           <a
@@ -61,8 +80,9 @@ export default function CSVUploadPage() {
           onResult={(data) => {
             // Redirecionar após 3 segundos se houver sucesso
             if (data.success > 0) {
+              clearCache(); // Limpar cache antes de redirecionar
               setTimeout(() => {
-                router.push("/");
+                router.push("/?refresh=" + Date.now()); // Forçar reload com refresh param
               }, 3000);
             }
           }}

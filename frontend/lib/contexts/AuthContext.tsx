@@ -14,6 +14,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   refreshUser: () => Promise<void>;
+  clearCache: () => void;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,6 +23,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const clearCache = () => {
+    // Limpar localStorage
+    if (typeof window !== "undefined") {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith("products_") || key.startsWith("cart_"))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+      // Disparar evento customizado para limpar cache de produtos
+      window.dispatchEvent(new CustomEvent("clearProductsCache"));
+    }
+  };
+
+  const logout = () => {
+    clearCache();
+    setUser(null);
+  };
 
   const refreshUser = async () => {
     setLoading(true);
@@ -39,7 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, refreshUser }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, refreshUser, clearCache, logout }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 

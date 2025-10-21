@@ -9,7 +9,7 @@ import { Feedback } from "@/components/Feedback";
 import styles from "./page.module.css";
 
 export default function ProfilePage() {
-  const { user, loading, refreshUser } = useAuth();
+  const { user, loading, logout, refreshUser } = useAuth();
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
@@ -81,8 +81,8 @@ export default function ProfilePage() {
       // Fazer logout e redirecionar
       setTimeout(async () => {
         await apiFetch("/auth/logout", { method: "POST" });
-        await refreshUser();
-        router.push("/");
+        logout(); // Usar nova função logout
+        window.location.href = "/";
       }, 1500);
     } catch (error: any) {
       setFeedback({

@@ -15,6 +15,7 @@ type Product = {
   price: number;
   stock: number;
   images: string[];
+  sellerId: string;
 };
 
 export default function EditProductPage() {
@@ -52,11 +53,21 @@ export default function EditProductPage() {
   const loadProduct = async () => {
     try {
       setLoading(true);
-      const response = await apiFetch<{ success: boolean; data: Product }>(
+      const response = await apiFetch<{ success: boolean; data: Product & { sellerId: string } }>(
         `/products/${productId}`
       );
 
       if (response.success) {
+        // Verificar se o produto pertence ao vendedor logado
+        if (response.data.sellerId !== user?.id) {
+          setFeedback({
+            message: "Você não tem permissão para editar este produto.",
+            type: "error",
+          });
+          setTimeout(() => router.push("/dashboard"), 2000);
+          return;
+        }
+
         setProduct(response.data);
         setFormData({
           name: response.data.name,

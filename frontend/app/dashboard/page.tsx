@@ -17,8 +17,24 @@ export default function DashboardPage() {
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
+  // Listener para limpar cache quando login/logout ocorrer
+  useEffect(() => {
+    const handleClearCache = () => {
+      setItems(null);
+      setCurrentPage(1);
+      setLoading(true);
+    };
+
+    window.addEventListener("clearProductsCache", handleClearCache);
+    return () => window.removeEventListener("clearProductsCache", handleClearCache);
+  }, []);
+
   useEffect(() => {
     if (loadingSession) return;
+
+    // Limpar dados antigos ao trocar de usuário
+    setItems(null);
+    setCurrentPage(1);
 
     (async () => {
       try {
@@ -39,7 +55,7 @@ export default function DashboardPage() {
         setLoading(false);
       }
     })();
-  }, [user, loadingSession, currentPage]);
+  }, [user?.id, loadingSession, currentPage]);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {

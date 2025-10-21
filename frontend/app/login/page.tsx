@@ -18,7 +18,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
-  const { refreshUser } = useAuth();
+  const { refreshUser, clearCache } = useAuth();
   const [loading, setLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; type: "error" | "success" } | null>(
@@ -77,6 +77,7 @@ export default function LoginPage() {
       }
 
       setIsRedirecting(true);
+      clearCache(); // Limpar cache antes de atualizar
       await refreshUser();
 
       if (redirect === "cart") {
@@ -84,6 +85,11 @@ export default function LoginPage() {
       } else {
         router.push("/");
       }
+
+      // Forçar reload para limpar qualquer cache do Next.js
+      setTimeout(() => {
+        window.location.href = redirect === "cart" ? "/cart" : "/";
+      }, 100);
     } catch (error: any) {
       setFeedback({ message: error.message || "Erro ao fazer login.", type: "error" });
       setLoading(false);

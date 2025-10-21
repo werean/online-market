@@ -10,6 +10,12 @@ export async function productRoutes(fastify: FastifyInstance) {
   const productService = new ProductService(productRepository);
   const productController = new ProductController(productService);
 
+  // IMPORTANTE: Rotas específicas ANTES de rotas com parâmetros dinâmicos
+  fastify.get("/mine", {
+    preHandler: [verifySellerAccess],
+    handler: productController.getProduct,
+  });
+
   fastify.get("/", productController.getAll);
   fastify.get("/:id", productController.getById);
 
@@ -21,11 +27,6 @@ export async function productRoutes(fastify: FastifyInstance) {
   fastify.post("/upload", {
     preHandler: [verifySellerAccess],
     handler: productController.uploadCSV,
-  });
-
-  fastify.get("/mine", {
-    preHandler: [verifySellerAccess],
-    handler: productController.getProduct,
   });
 
   fastify.put("/:id", {

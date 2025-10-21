@@ -92,7 +92,11 @@ export class ProductService {
   }
 
   async getSellerProducts(userId: string, page = 1, limit = 10) {
+    console.log(`[PRODUCT SERVICE] getSellerProducts chamado para userId: ${userId}`);
     const products = await this.productRepository.findAllBySeller(userId, page, limit);
+    console.log(
+      `[PRODUCT SERVICE] Encontrados ${products.length} produtos para o vendedor ${userId}`
+    );
     const total = await this.productRepository.countBySeller(userId);
 
     const mappedProducts = products.map((product) => {
@@ -333,7 +337,16 @@ export class ProductService {
       }
 
       // Validar e preparar dados
-      const images = row.images ? row.images.split(";").map((img: string) => img.trim()) : [];
+      // Processa imagens separadas por espaço (múltiplas URLs na mesma célula)
+      const rawImages = row.images || "";
+      const images = rawImages
+        .split(/\s+/)
+        .map((img: string) => img.trim())
+        .filter((img: string) => img.length > 0 && img.startsWith("http"));
+
+      console.log(`[CSV] Linha ${lineNumber} - Nome: ${row.name}`);
+      console.log(`[CSV] Linha ${lineNumber} - Raw images: ${rawImages}`);
+      console.log(`[CSV] Linha ${lineNumber} - Parsed images:`, images);
 
       const productData = {
         name: row.name,

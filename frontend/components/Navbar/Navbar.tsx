@@ -46,7 +46,7 @@ function ProfileIcon() {
 }
 
 export function Navbar() {
-  const { user, loading, refreshUser } = useAuth();
+  const { user, loading, logout } = useAuth();
   const { items } = useCart();
   const router = useRouter();
   const [showCart, setShowCart] = useState(false);
@@ -54,8 +54,10 @@ export function Navbar() {
   const handleLogout = async () => {
     try {
       await apiFetch("/auth/logout", { method: "POST" });
-      refreshUser();
+      logout(); // Usar nova função logout
       router.push("/");
+      // Forçar reload para limpar qualquer cache do Next.js
+      window.location.href = "/";
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
     }
